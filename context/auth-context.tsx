@@ -7,17 +7,20 @@ interface User {
   id: string
   email: string
   name: string
-  role: string
+  role: "cxo" | "mentor" | "admin" | "super_admin"
   organization: string
   industry: string
   isVerified: boolean
+  avatar?: string
+  title?: string
 }
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
+  login: (email: string, otp: string) => Promise<boolean>
   logout: () => void
   register: (userData: any) => Promise<boolean>
+  sendOTP: (email: string) => Promise<boolean>
   isLoading: boolean
 }
 
@@ -30,37 +33,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for existing session
     const token = localStorage.getItem("cxo_token")
-    if (token) {
-      // Validate token and get user data
-      // This would normally be an API call
-      setUser({
-        id: "1",
-        email: "ceo@example.com",
-        name: "John Doe",
-        role: "CEO",
-        organization: "Tech Innovations Inc.",
-        industry: "Technology",
-        isVerified: true,
-      })
+    const userData = localStorage.getItem("cxo_user")
+
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData))
+      } catch (error) {
+        console.error("Error parsing user data:", error)
+        localStorage.removeItem("cxo_token")
+        localStorage.removeItem("cxo_user")
+      }
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const sendOTP = async (email: string): Promise<boolean> => {
     try {
-      // This would be an API call to your backend
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
+      // For demo purposes, always return true
+      // In production, this would send an actual OTP
+      console.log(`Sending OTP to ${email}`)
+      return true
+    } catch (error) {
+      console.error("Send OTP error:", error)
+      return false
+    }
+  }
 
-      if (response.ok) {
-        const data = await response.json()
-        localStorage.setItem("cxo_token", data.token)
-        setUser(data.user)
+  const login = async (email: string, otp: string): Promise<boolean> => {
+    try {
+      // Demo login logic
+      if (email === "test@demo.com" && otp === "123456") {
+        const demoUser: User = {
+          id: "demo-user-1",
+          email: "test@demo.com",
+          name: "Demo User",
+          role: "super_admin", // Default to super_admin for demo
+          organization: "Demo Corp",
+          industry: "Technology",
+          isVerified: true,
+          avatar: "/placeholder-user.jpg",
+          title: "Chief Executive Officer",
+        }
+
+        localStorage.setItem("cxo_token", "demo-token")
+        localStorage.setItem("cxo_user", JSON.stringify(demoUser))
+        setUser(demoUser)
         return true
       }
+
+      // You can add more demo users here for different roles
+      const demoUsers: Record<string, User> = {
+        "cxo@demo.com": {
+          id: "demo-cxo-1",
+          email: "cxo@demo.com",
+          name: "John Smith",
+          role: "cxo",
+          organization: "Tech Innovations",
+          industry: "Technology",
+          isVerified: true,
+          title: "Chief Executive Officer",
+        },
+        "mentor@demo.com": {
+          id: "demo-mentor-1",
+          email: "mentor@demo.com",
+          name: "Sarah Johnson",
+          role: "mentor",
+          organization: "Leadership Consulting",
+          industry: "Consulting",
+          isVerified: true,
+          title: "Senior Executive Coach",
+        },
+        "admin@demo.com": {
+          id: "demo-admin-1",
+          email: "admin@demo.com",
+          name: "Mike Wilson",
+          role: "admin",
+          organization: "CXO Network",
+          industry: "Technology",
+          isVerified: true,
+          title: "Platform Administrator",
+        },
+      }
+
+      if (demoUsers[email] && otp === "123456") {
+        localStorage.setItem("cxo_token", "demo-token")
+        localStorage.setItem("cxo_user", JSON.stringify(demoUsers[email]))
+        setUser(demoUsers[email])
+        return true
+      }
+
       return false
     } catch (error) {
       console.error("Login error:", error)
@@ -70,26 +131,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem("cxo_token")
+    localStorage.removeItem("cxo_user")
     setUser(null)
   }
 
   const register = async (userData: any): Promise<boolean> => {
     try {
-      // This would be an API call to your backend
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      })
-
-      return response.ok
+      // Demo registration - always succeeds
+      console.log("Registering user:", userData)
+      return true
     } catch (error) {
       console.error("Registration error:", error)
       return false
     }
   }
 
-  return <AuthContext.Provider value={{ user, login, logout, register, isLoading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, login, logout, register, sendOTP, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
