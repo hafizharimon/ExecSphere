@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -10,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Building2, Mail, Shield } from "lucide-react"
+import { Building2, Mail, Shield, AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("test@demo.com")
@@ -27,7 +27,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const success = await sendOTP(email)
+      const success = await sendOTP(email, "email")
       if (success) {
         setIsOtpSent(true)
         toast({
@@ -67,7 +67,7 @@ export default function LoginPage() {
       } else {
         toast({
           title: "Login failed",
-          description: "Invalid email or OTP.",
+          description: "Invalid email or OTP. Please check your credentials.",
           variant: "destructive",
         })
       }
@@ -80,6 +80,20 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const validateOTP = (value: string) => {
+    // Format: 2 letters + 2 numbers + 1 letter + 1 number (e.g., AZ47E5)
+    const otpPattern = /^[A-Z]{2}[0-9]{2}[A-Z][0-9]$/
+    return otpPattern.test(value)
+  }
+
+  const formatOTP = (value: string) => {
+    // Remove any non-alphanumeric characters and convert to uppercase
+    const cleaned = value.replace(/[^A-Z0-9]/gi, "").toUpperCase()
+
+    // Limit to 6 characters
+    return cleaned.slice(0, 6)
   }
 
   return (
@@ -118,11 +132,36 @@ export default function LoginPage() {
               {/* Demo credentials info */}
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-800 font-medium">Demo Credentials:</p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Email: test@demo.com
-                  <br />
-                  OTP: 123456
-                </p>
+                <div className="text-xs text-blue-600 mt-1 space-y-1">
+                  <p>
+                    <strong>Super Admin:</strong> test@demo.com
+                  </p>
+                  <p>
+                    <strong>CXO:</strong> cxo@demo.com
+                  </p>
+                  <p>
+                    <strong>Mentor:</strong> mentor@demo.com
+                  </p>
+                  <p>
+                    <strong>Pending User:</strong> pending@demo.com
+                  </p>
+                  <p>
+                    <strong>OTP:</strong> AZ47E5
+                  </p>
+                </div>
+              </div>
+
+              {/* Account status warning */}
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-yellow-800 font-medium">Account Status Required</p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Login access is only available for Super Admin approved accounts.
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
             <CardFooter>
@@ -141,13 +180,21 @@ export default function LoginPage() {
                   <Input
                     id="otp"
                     type="text"
-                    placeholder="Enter 6-digit code"
+                    placeholder="AZ47E5"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="pl-10 text-center text-lg tracking-widest"
+                    onChange={(e) => setOtp(formatOTP(e.target.value))}
+                    className="pl-10 text-center text-lg tracking-widest font-mono"
                     maxLength={6}
                     required
                   />
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Format: 2 letters + 2 numbers + 1 letter + 1 number</span>
+                  {otp && (
+                    <Badge variant={validateOTP(otp) ? "default" : "destructive"}>
+                      {validateOTP(otp) ? "Valid" : "Invalid"}
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -158,7 +205,7 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || !validateOTP(otp)}>
                 {isLoading ? "Verifying..." : "Verify & Sign In"}
               </Button>
               <div className="text-sm text-center text-muted-foreground">

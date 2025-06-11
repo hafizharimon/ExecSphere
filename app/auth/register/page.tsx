@@ -1,7 +1,4 @@
 "use client"
-
-import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -11,59 +8,103 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Building2 } from "lucide-react"
+import { Building2, Linkedin, Mail, Phone, CreditCard, Shield, CheckCircle, AlertCircle } from "lucide-react"
 
 export default function RegisterPage() {
+  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
+    // LinkedIn Data
+    linkedinProfile: "",
     name: "",
     email: "",
-    password: "",
-    confirmPassword: "",
-    role: "",
     organization: "",
+    title: "",
+
+    // Additional Info
     industry: "",
     yearsExperience: "",
     region: "",
+    companyEmail: "",
+    phone: "",
+    aadhaarNumber: "",
+
+    // Verification
+    emailOTP: "",
+    smsOTP: "",
+    aadhaarOTP: "",
+
+    // Privileges
+    selectedPrivileges: [] as string[],
+
+    // Payment
+    paymentMethod: "",
+
+    // Terms
+    acceptedTerms: false,
+    acceptedPrivacy: false,
   })
+
+  const [verificationStatus, setVerificationStatus] = useState({
+    email: false,
+    sms: false,
+    aadhaar: false,
+    payment: false,
+  })
+
   const [isLoading, setIsLoading] = useState(false)
-  const { register } = useAuth()
+  const { register, sendOTP, verifyPayment } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const availablePrivileges = [
+    { id: "networking", label: "Executive Networking", description: "Connect with C-level executives" },
+    { id: "mentorship", label: "Mentorship Program", description: "Access to mentors and mentees" },
+    { id: "events", label: "Exclusive Events", description: "Webinars, summits, and roundtables" },
+    { id: "forums", label: "Discussion Forums", description: "Role-specific discussion groups" },
+    { id: "analytics", label: "Industry Analytics", description: "Market insights and reports" },
+    { id: "advisory", label: "Advisory Services", description: "Strategic consulting opportunities" },
+    { id: "investment", label: "Investment Network", description: "Connect with investors and opportunities" },
+    { id: "partnerships", label: "Partnership Hub", description: "Business partnership opportunities" },
+  ]
 
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password mismatch",
-        description: "Passwords do not match.",
-        variant: "destructive",
-      })
-      return
-    }
+  const handleLinkedInConnect = () => {
+    // Simulate LinkedIn OAuth flow
+    toast({
+      title: "LinkedIn Connected",
+      description: "Profile data imported successfully",
+    })
 
+    // Simulate imported data
+    setFormData((prev) => ({
+      ...prev,
+      linkedinProfile: "https://linkedin.com/in/demo-user",
+      name: "Demo Executive",
+      organization: "Demo Corporation",
+      title: "Chief Executive Officer",
+      industry: "Technology",
+      yearsExperience: "15",
+    }))
+  }
+
+  const handleSendOTP = async (type: "email" | "sms" | "aadhaar") => {
     setIsLoading(true)
-
     try {
-      const success = await register(formData)
+      const target = type === "email" ? formData.companyEmail : type === "sms" ? formData.phone : formData.aadhaarNumber
+
+      const success = await sendOTP(target, type)
       if (success) {
         toast({
-          title: "Registration submitted!",
-          description: "Your application is under review. You'll receive an email once approved.",
-        })
-        router.push("/auth/login")
-      } else {
-        toast({
-          title: "Registration failed",
-          description: "Please check your information and try again.",
-          variant: "destructive",
+          title: `${type.toUpperCase()} OTP Sent`,
+          description: `Verification code sent to your ${type}`,
         })
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
+        description: "Failed to send OTP",
         variant: "destructive",
       })
     } finally {
@@ -71,154 +112,543 @@ export default function RegisterPage() {
     }
   }
 
-  const updateFormData = (field: string, value: string) => {
+  const handleVerifyOTP = (type: "email" | "sms" | "aadhaar") => {
+    // Demo verification - accept any OTP in format ABC123
+    const otpValue = type === "email" ? formData.emailOTP : type === "sms" ? formData.smsOTP : formData.aadhaarOTP
+
+    const otpPattern = /^[A-Z]{2}[0-9]{2}[A-Z][0-9]$/
+
+    if (otpPattern.test(otpValue)) {
+      setVerificationStatus((prev) => ({ ...prev, [type]: true }))
+      toast({
+        title: `${type.toUpperCase()} Verified`,
+        description: "Verification successful",
+      })
+    } else {
+      toast({
+        title: "Invalid OTP",
+        description: "Please enter OTP in format: AZ47E5",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handlePrivilegeToggle = (privilegeId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedPrivileges: prev.selectedPrivileges.includes(privilegeId)
+        ? prev.selectedPrivileges.filter((id) => id !== privilegeId)
+        : [...prev.selectedPrivileges, privilegeId],
+    }))
+  }
+
+  const handlePayment = async () => {
+    setIsLoading(true)
+    try {
+      const result = await register(formData)
+      if (result.success && result.paymentUrl) {
+        // Simulate payment gateway redirect
+        toast({
+          title: "Redirecting to Payment",
+          description: "You will be redirected to complete payment of ₹1,000",
+        })
+
+        // Simulate successful payment after 2 seconds
+        setTimeout(() => {
+          setVerificationStatus((prev) => ({ ...prev, payment: true }))
+          toast({
+            title: "Payment Successful",
+            description: "Registration fee paid successfully",
+          })
+          setCurrentStep(5)
+        }, 2000)
+      }
+    } catch (error) {
+      toast({
+        title: "Payment Failed",
+        description: "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!formData.acceptedTerms || !formData.acceptedPrivacy) {
+      toast({
+        title: "Terms Required",
+        description: "Please accept terms and privacy policy",
+        variant: "destructive",
+      })
+      return
+    }
+
+    toast({
+      title: "Registration Submitted",
+      description: "Your application is under review by Super Admin",
+    })
+
+    router.push("/auth/registration-pending")
+  }
+
+  const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const canProceedToNext = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.linkedinProfile && formData.name && formData.email
+      case 2:
+        return formData.companyEmail && formData.phone && formData.aadhaarNumber
+      case 3:
+        return verificationStatus.email && verificationStatus.sms && verificationStatus.aadhaar
+      case 4:
+        return formData.selectedPrivileges.length > 0
+      case 5:
+        return verificationStatus.payment
+      default:
+        return true
+    }
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/50 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center mb-4">
-            <Building2 className="h-8 w-8" />
+            <Building2 className="h-8 w-8 text-primary" />
             <span className="ml-2 text-xl font-bold">CXO Network</span>
           </div>
-          <CardTitle className="text-2xl">Request Invitation</CardTitle>
-          <CardDescription>
-            Join the exclusive network of C-level executives. All applications are reviewed manually.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => updateFormData("name", e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Company Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@company.com"
-                  value={formData.email}
-                  onChange={(e) => updateFormData("email", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+          <CardTitle className="text-2xl">Executive Registration</CardTitle>
+          <CardDescription>Join the exclusive network of C-level executives</CardDescription>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => updateFormData("password", e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => updateFormData("confirmPassword", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="role">Executive Role</Label>
-                <Select value={formData.role} onValueChange={(value) => updateFormData("role", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CEO">CEO</SelectItem>
-                    <SelectItem value="CTO">CTO</SelectItem>
-                    <SelectItem value="CFO">CFO</SelectItem>
-                    <SelectItem value="COO">COO</SelectItem>
-                    <SelectItem value="CMO">CMO</SelectItem>
-                    <SelectItem value="CHRO">CHRO</SelectItem>
-                    <SelectItem value="Other">Other C-Level</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="organization">Organization</Label>
-                <Input
-                  id="organization"
-                  value={formData.organization}
-                  onChange={(e) => updateFormData("organization", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="industry">Industry</Label>
-                <Select value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Technology">Technology</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Healthcare">Healthcare</SelectItem>
-                    <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                    <SelectItem value="Retail">Retail</SelectItem>
-                    <SelectItem value="Energy">Energy</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="yearsExperience">Years of Experience</Label>
-                <Input
-                  id="yearsExperience"
-                  type="number"
-                  min="1"
-                  value={formData.yearsExperience}
-                  onChange={(e) => updateFormData("yearsExperience", e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="region">Region</Label>
-              <Input
-                id="region"
-                placeholder="e.g., North America, Europe, Asia-Pacific"
-                value={formData.region}
-                onChange={(e) => updateFormData("region", e.target.value)}
-                required
+          {/* Progress Indicator */}
+          <div className="flex justify-center space-x-2 mt-4">
+            {[1, 2, 3, 4, 5, 6].map((step) => (
+              <div
+                key={step}
+                className={`w-3 h-3 rounded-full ${step <= currentStep ? "bg-primary" : "bg-gray-300"}`}
               />
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">Step {currentStep} of 6</p>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Step 1: LinkedIn Integration */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-medium mb-2">Connect with LinkedIn</h3>
+                <p className="text-sm text-muted-foreground mb-4">Import your professional profile from LinkedIn</p>
+                <Button onClick={handleLinkedInConnect} className="w-full" size="lg">
+                  <Linkedin className="h-5 w-5 mr-2" />
+                  Connect LinkedIn Profile
+                </Button>
+              </div>
+
+              {formData.linkedinProfile && (
+                <div className="space-y-4 mt-6">
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-green-800 font-medium">LinkedIn Connected</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => updateFormData("name", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">LinkedIn Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => updateFormData("email", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="organization">Organization</Label>
+                      <Input
+                        id="organization"
+                        value={formData.organization}
+                        onChange={(e) => updateFormData("organization", e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Executive Title</Label>
+                      <Select value={formData.title} onValueChange={(value) => updateFormData("title", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CEO">CEO</SelectItem>
+                          <SelectItem value="CTO">CTO</SelectItem>
+                          <SelectItem value="CFO">CFO</SelectItem>
+                          <SelectItem value="COO">COO</SelectItem>
+                          <SelectItem value="CMO">CMO</SelectItem>
+                          <SelectItem value="CHRO">CHRO</SelectItem>
+                          <SelectItem value="CPO">CPO</SelectItem>
+                          <SelectItem value="Other">Other C-Level</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Submitting..." : "Submit Application"}
+          )}
+
+          {/* Step 2: Contact Information */}
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Contact & Verification Details</h3>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyEmail">Company Email *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="companyEmail"
+                      type="email"
+                      placeholder="your@company.com"
+                      value={formData.companyEmail}
+                      onChange={(e) => updateFormData("companyEmail", e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Must be your official company email address</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Mobile Number *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+91 9876543210"
+                      value={formData.phone}
+                      onChange={(e) => updateFormData("phone", e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="aadhaar">Aadhaar Number *</Label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="aadhaar"
+                      type="text"
+                      placeholder="1234 5678 9012"
+                      value={formData.aadhaarNumber}
+                      onChange={(e) => updateFormData("aadhaarNumber", e.target.value)}
+                      className="pl-10"
+                      maxLength={14}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Required for enhanced security verification</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="industry">Industry</Label>
+                    <Select value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select industry" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Technology">Technology</SelectItem>
+                        <SelectItem value="Finance">Finance</SelectItem>
+                        <SelectItem value="Healthcare">Healthcare</SelectItem>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="Retail">Retail</SelectItem>
+                        <SelectItem value="Energy">Energy</SelectItem>
+                        <SelectItem value="Consulting">Consulting</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="region">Region</Label>
+                    <Input
+                      id="region"
+                      placeholder="e.g., Mumbai, Delhi, Bangalore"
+                      value={formData.region}
+                      onChange={(e) => updateFormData("region", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: OTP Verification */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium">Multi-Factor Verification</h3>
+
+              {/* Email OTP */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Email Verification</Label>
+                  {verificationStatus.email ? (
+                    <Badge variant="default" className="bg-green-500">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Button size="sm" onClick={() => handleSendOTP("email")}>
+                      Send OTP
+                    </Button>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Enter OTP (e.g., AZ47E5)"
+                    value={formData.emailOTP}
+                    onChange={(e) => updateFormData("emailOTP", e.target.value.toUpperCase())}
+                    maxLength={6}
+                    disabled={verificationStatus.email}
+                  />
+                  <Button
+                    onClick={() => handleVerifyOTP("email")}
+                    disabled={verificationStatus.email || !formData.emailOTP}
+                  >
+                    Verify
+                  </Button>
+                </div>
+              </div>
+
+              {/* SMS OTP */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>SMS Verification</Label>
+                  {verificationStatus.sms ? (
+                    <Badge variant="default" className="bg-green-500">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Button size="sm" onClick={() => handleSendOTP("sms")}>
+                      Send OTP
+                    </Button>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Enter OTP (e.g., AZ47E5)"
+                    value={formData.smsOTP}
+                    onChange={(e) => updateFormData("smsOTP", e.target.value.toUpperCase())}
+                    maxLength={6}
+                    disabled={verificationStatus.sms}
+                  />
+                  <Button onClick={() => handleVerifyOTP("sms")} disabled={verificationStatus.sms || !formData.smsOTP}>
+                    Verify
+                  </Button>
+                </div>
+              </div>
+
+              {/* Aadhaar OTP */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Aadhaar Verification</Label>
+                  {verificationStatus.aadhaar ? (
+                    <Badge variant="default" className="bg-green-500">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Button size="sm" onClick={() => handleSendOTP("aadhaar")}>
+                      Send OTP
+                    </Button>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Enter OTP (e.g., AZ47E5)"
+                    value={formData.aadhaarOTP}
+                    onChange={(e) => updateFormData("aadhaarOTP", e.target.value.toUpperCase())}
+                    maxLength={6}
+                    disabled={verificationStatus.aadhaar}
+                  />
+                  <Button
+                    onClick={() => handleVerifyOTP("aadhaar")}
+                    disabled={verificationStatus.aadhaar || !formData.aadhaarOTP}
+                  >
+                    Verify
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Demo OTP Format:</strong> Use format like AZ47E5 (2 letters + 2 numbers + 1 letter + 1 number)
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Privilege Selection */}
+          {currentStep === 4 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Select Your Privileges</h3>
+              <p className="text-sm text-muted-foreground">
+                Choose the platform features you'd like access to. You can modify these later.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availablePrivileges.map((privilege) => (
+                  <div key={privilege.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+                    <Checkbox
+                      id={privilege.id}
+                      checked={formData.selectedPrivileges.includes(privilege.id)}
+                      onCheckedChange={() => handlePrivilegeToggle(privilege.id)}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor={privilege.id} className="font-medium cursor-pointer">
+                        {privilege.label}
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">{privilege.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {formData.selectedPrivileges.length > 0 && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">Selected {formData.selectedPrivileges.length} privilege(s)</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 5: Payment */}
+          {currentStep === 5 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Registration Fee</h3>
+              <p className="text-sm text-muted-foreground">
+                A one-time registration fee of ₹1,000 is required to ensure platform authenticity and quality.
+              </p>
+
+              <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-xl font-bold mb-2">₹1,000</h4>
+                <p className="text-sm text-muted-foreground mb-4">One-time Registration Fee</p>
+
+                {!verificationStatus.payment ? (
+                  <Button onClick={handlePayment} disabled={isLoading} size="lg">
+                    {isLoading ? "Processing..." : "Pay Now"}
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Badge variant="default" className="bg-green-500">
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Payment Successful
+                    </Badge>
+                    <p className="text-sm text-green-600">Transaction ID: TXN123456789</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                <p>• Secure payment processing</p>
+                <p>• Refundable if application is rejected</p>
+                <p>• All major payment methods accepted</p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Terms and Submission */}
+          {currentStep === 6 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Terms & Conditions</h3>
+
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="terms"
+                    checked={formData.acceptedTerms}
+                    onCheckedChange={(checked) => updateFormData("acceptedTerms", checked)}
+                  />
+                  <Label htmlFor="terms" className="text-sm cursor-pointer">
+                    I accept the{" "}
+                    <Link href="/terms" className="text-primary hover:underline">
+                      Terms of Service
+                    </Link>{" "}
+                    and understand that my application will be reviewed by the Super Admin.
+                  </Label>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="privacy"
+                    checked={formData.acceptedPrivacy}
+                    onCheckedChange={(checked) => updateFormData("acceptedPrivacy", checked)}
+                  />
+                  <Label htmlFor="privacy" className="text-sm cursor-pointer">
+                    I accept the{" "}
+                    <Link href="/privacy" className="text-primary hover:underline">
+                      Privacy Policy
+                    </Link>{" "}
+                    and consent to data processing.
+                  </Label>
+                </div>
+              </div>
+
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-yellow-800 font-medium">Important Notice</p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Your registration will be reviewed by our Super Admin team. You will receive login access only
+                      after approval. This process typically takes 24-48 hours.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+            disabled={currentStep === 1}
+          >
+            Previous
+          </Button>
+
+          {currentStep < 6 ? (
+            <Button onClick={() => setCurrentStep(currentStep + 1)} disabled={!canProceedToNext()}>
+              Next
             </Button>
-            <div className="text-sm text-center text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="text-primary hover:underline">
-                Sign in
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+          ) : (
+            <Button onClick={handleSubmit} disabled={!formData.acceptedTerms || !formData.acceptedPrivacy}>
+              Submit Application
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </div>
   )
