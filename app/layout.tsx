@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CXO Network - Executive Networking Platform",
+  title: "NexLink Hub - Executive Networking Platform",
   description:
     "An exclusive networking platform for C-level executives to connect, collaborate, and consult with peers across industries.",
     generator: 'v0.dev'

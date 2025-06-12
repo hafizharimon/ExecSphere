@@ -29,6 +29,7 @@ import {
   BarChart3,
   Shield,
   Crown,
+  Bell,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -41,15 +42,15 @@ export function Navigation() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "super_admin":
-        return "bg-purple-500"
+        return "from-purple-500 to-pink-500"
       case "admin":
-        return "bg-red-500"
+        return "from-red-500 to-orange-500"
       case "mentor":
-        return "bg-blue-500"
+        return "from-blue-500 to-cyan-500"
       case "cxo":
-        return "bg-green-500"
+        return "from-green-500 to-emerald-500"
       default:
-        return "bg-gray-500"
+        return "from-gray-500 to-slate-500"
     }
   }
 
@@ -104,28 +105,34 @@ export function Navigation() {
   const navigationItems = getNavigationItems()
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+    <header className="sticky top-0 z-50 w-full glass-effect border-b border-white/20">
+      <div className="container flex h-16 items-center px-4">
         {/* Logo */}
         <div className="mr-4 hidden md:flex">
-          <Link href="/dashboard" className="mr-6 flex items-center space-x-2">
-            <Building2 className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">CXO Network</span>
+          <Link href="/dashboard" className="mr-6 flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-xl gradient-bg flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              NexLink Hub
+            </span>
           </Link>
         </div>
 
         {/* Mobile Menu */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-xl">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+          <SheetContent side="left" className="w-[300px] sm:w-[400px] rounded-r-3xl">
             <SheetHeader>
-              <SheetTitle className="flex items-center space-x-2">
-                <Building2 className="h-6 w-6" />
-                <span>CXO Network</span>
+              <SheetTitle className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-xl gradient-bg flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-white" />
+                </div>
+                <span>NexLink Hub</span>
               </SheetTitle>
               <SheetDescription>Navigate your executive network</SheetDescription>
             </SheetHeader>
@@ -135,9 +142,9 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary p-2 rounded-md hover:bg-accent"
+                  className="flex items-center space-x-3 text-sm font-medium transition-colors hover:text-blue-600 p-3 rounded-2xl hover:bg-blue-50"
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-5 w-5" />
                   <span>{item.label}</span>
                 </Link>
               ))}
@@ -151,21 +158,28 @@ export function Navigation() {
             <Link
               key={item.href}
               href={item.href}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className="transition-colors hover:text-blue-600 text-slate-700 hover:bg-blue-50 px-3 py-2 rounded-xl"
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* User Menu */}
+        {/* Right Side Actions */}
         <div className="flex flex-1 items-center justify-end space-x-4">
+          {/* Notifications */}
+          <Button variant="ghost" size="icon" className="rounded-xl relative">
+            <Bell className="h-5 w-5" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+          </Button>
+
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-2xl">
+                <Avatar className="h-10 w-10 ring-2 ring-white shadow-lg">
                   <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                  <AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold">
                     {user.name
                       .split(" ")
                       .map((n) => n[0])
@@ -174,13 +188,15 @@ export function Navigation() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
+            <DropdownMenuContent className="w-64 rounded-2xl border-0 shadow-xl" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal p-4">
+                <div className="flex flex-col space-y-2">
                   <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  <div className="flex items-center space-x-1 mt-1">
-                    <Badge variant="secondary" className={`${getRoleColor(user.role)} text-white text-xs`}>
+                  <p className="text-xs leading-none text-slate-600">{user.email}</p>
+                  <div className="flex items-center space-x-1 mt-2">
+                    <Badge
+                      className={`bg-gradient-to-r ${getRoleColor(user.role)} text-white text-xs rounded-full px-2 py-1`}
+                    >
                       <span className="flex items-center space-x-1">
                         {getRoleIcon(user.role)}
                         <span className="capitalize">{user.role.replace("_", " ")}</span>
@@ -190,29 +206,29 @@ export function Navigation() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/profile">
-                  <User className="mr-2 h-4 w-4" />
+              <DropdownMenuItem asChild className="rounded-xl mx-2 my-1">
+                <Link href="/profile" className="flex items-center">
+                  <User className="mr-3 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings">
-                  <Settings className="mr-2 h-4 w-4" />
+              <DropdownMenuItem asChild className="rounded-xl mx-2 my-1">
+                <Link href="/settings" className="flex items-center">
+                  <Settings className="mr-3 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
               </DropdownMenuItem>
               {user.role === "super_admin" && (
-                <DropdownMenuItem asChild>
-                  <Link href="/super-admin">
-                    <Crown className="mr-2 h-4 w-4" />
+                <DropdownMenuItem asChild className="rounded-xl mx-2 my-1">
+                  <Link href="/super-admin" className="flex items-center">
+                    <Crown className="mr-3 h-4 w-4" />
                     <span>Super Admin</span>
                   </Link>
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={logout} className="rounded-xl mx-2 my-1 text-red-600 focus:text-red-600">
+                <LogOut className="mr-3 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
