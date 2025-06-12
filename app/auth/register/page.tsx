@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import {
   ArrowLeft,
+  ArrowRight,
   Linkedin,
   Mail,
   Phone,
@@ -274,58 +275,60 @@ export default function RegisterPage() {
           Back
         </Link>
       </div>
-      
+
       <div className="container max-w-md mx-auto px-6 pb-16">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-slate-900">Create Account</h1>
           <p className="text-slate-500 mt-1">Join the executive network</p>
         </div>
-        
+
         {/* Progress Indicator */}
         <div className="flex justify-between items-center mb-8">
           {[1, 2, 3, 4, 5, 6].map((step) => (
-            <div 
-              key={step} 
+            <div
+              key={step}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                step < currentStep 
-                  ? 'bg-primary text-white' 
-                  : step === currentStep 
-                    ? 'bg-primary-100 text-primary-600 ring-2 ring-primary-200' 
-                    : 'bg-slate-100 text-slate-400'
+                step < currentStep
+                  ? "bg-primary text-white"
+                  : step === currentStep
+                    ? "bg-primary-100 text-primary-600 ring-2 ring-primary-200"
+                    : "bg-slate-100 text-slate-400"
               }`}
             >
               {step < currentStep ? <CheckCircle className="h-4 w-4" /> : step}
             </div>
           ))}
         </div>
-        
+
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-slate-800">{getStepTitle()}</h2>
           <p className="text-sm text-slate-500">Step {currentStep} of 6</p>
         </div>
-        
+
         <div className="space-y-6">
           {/* Step 1: LinkedIn Integration */}
           {currentStep === 1 && (
             <div className="space-y-6">
-              <Button 
-                onClick={handleLinkedInConnect} 
+              <Button
+                onClick={handleLinkedInConnect}
                 className="w-full flex items-center justify-center space-x-2 bg-[#0077B5] hover:bg-[#006699] text-white rounded-full py-3 px-4"
               >
                 <Linkedin className="h-5 w-5" />
                 <span>Connect with LinkedIn</span>
               </Button>
-              
+
               {formData.linkedinProfile && (
                 <div className="space-y-4 mt-4">
                   <div className="p-3 bg-green-50 rounded-xl border border-green-100 flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
                     <span className="text-green-700 text-sm font-medium">LinkedIn Connected</span>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-medium text-slate-700">Full Name</Label>
+                      <Label htmlFor="name" className="text-sm font-medium text-slate-700">
+                        Full Name
+                      </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <User className="h-5 w-5 text-slate-400" />
@@ -339,9 +342,11 @@ export default function RegisterPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium text-slate-700">LinkedIn Email</Label>
+                      <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                        LinkedIn Email
+                      </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Mail className="h-5 w-5 text-slate-400" />
@@ -356,9 +361,11 @@ export default function RegisterPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="organization" className="text-sm font-medium text-slate-700">Organization</Label>
+                      <Label htmlFor="organization" className="text-sm font-medium text-slate-700">
+                        Organization
+                      </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Building className="h-5 w-5 text-slate-400" />
@@ -372,9 +379,11 @@ export default function RegisterPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="title" className="text-sm font-medium text-slate-700">Executive Title</Label>
+                      <Label htmlFor="title" className="text-sm font-medium text-slate-700">
+                        Executive Title
+                      </Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Briefcase className="h-5 w-5 text-slate-400" />
@@ -406,7 +415,9 @@ export default function RegisterPage() {
           {currentStep === 2 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="companyEmail" className="text-sm font-medium text-slate-700">Company Email *</Label>
+                <Label htmlFor="companyEmail" className="text-sm font-medium text-slate-700">
+                  Company Email *
+                </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400" />
@@ -425,7 +436,9 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-slate-700">Mobile Number *</Label>
+                <Label htmlFor="phone" className="text-sm font-medium text-slate-700">
+                  Mobile Number *
+                </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Phone className="h-5 w-5 text-slate-400" />
@@ -443,7 +456,9 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="aadhaar" className="text-sm font-medium text-slate-700">Aadhaar Number *</Label>
+                <Label htmlFor="aadhaar" className="text-sm font-medium text-slate-700">
+                  Aadhaar Number *
+                </Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Shield className="h-5 w-5 text-slate-400" />
@@ -464,7 +479,9 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="industry" className="text-sm font-medium text-slate-700">Industry</Label>
+                  <Label htmlFor="industry" className="text-sm font-medium text-slate-700">
+                    Industry
+                  </Label>
                   <Select value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
                     <SelectTrigger className="nexlink-input">
                       <SelectValue placeholder="Select industry" />
@@ -481,9 +498,11 @@ export default function RegisterPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="region" className="text-sm font-medium text-slate-700">Region</Label>
+                  <Label htmlFor="region" className="text-sm font-medium text-slate-700">
+                    Region
+                  </Label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <MapPin className="h-5 w-5 text-slate-400" />
@@ -514,16 +533,12 @@ export default function RegisterPage() {
                       Verified
                     </span>
                   ) : (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSendOTP("email")}
-                      className="rounded-full text-xs px-3"
-                    >
+                    <Button size="sm" onClick={() => handleSendOTP("email")} className="rounded-full text-xs px-3">
                       Send OTP
                     </Button>
                   )}
                 </div>
-                
+
                 {!verificationStatus.email && (
                   <div className="flex space-x-2">
                     <div className="relative flex-1">
@@ -559,16 +574,12 @@ export default function RegisterPage() {
                       Verified
                     </span>
                   ) : (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSendOTP("sms")}
-                      className="rounded-full text-xs px-3"
-                    >
+                    <Button size="sm" onClick={() => handleSendOTP("sms")} className="rounded-full text-xs px-3">
                       Send OTP
                     </Button>
                   )}
                 </div>
-                
+
                 {!verificationStatus.sms && (
                   <div className="flex space-x-2">
                     <div className="relative flex-1">
@@ -583,11 +594,7 @@ export default function RegisterPage() {
                         className="nexlink-input pl-10 text-center font-mono"
                       />
                     </div>
-                    <Button
-                      onClick={() => handleVerifyOTP("sms")}
-                      disabled={!formData.smsOTP}
-                      className="rounded-full"
-                    >
+                    <Button onClick={() => handleVerifyOTP("sms")} disabled={!formData.smsOTP} className="rounded-full">
                       Verify
                     </Button>
                   </div>
@@ -604,16 +611,12 @@ export default function RegisterPage() {
                       Verified
                     </span>
                   ) : (
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSendOTP("aadhaar")}
-                      className="rounded-full text-xs px-3"
-                    >
+                    <Button size="sm" onClick={() => handleSendOTP("aadhaar")} className="rounded-full text-xs px-3">
                       Send OTP
                     </Button>
                   )}
                 </div>
-                
+
                 {!verificationStatus.aadhaar && (
                   <div className="flex space-x-2">
                     <div className="relative flex-1">
@@ -641,7 +644,8 @@ export default function RegisterPage() {
 
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <p className="text-sm text-blue-800">
-                  <span className="font-medium">Demo OTP Format:</span> Use format like AZ47E5 (2 letters + 2 numbers + 1 letter + 1 number)
+                  <span className="font-medium">Demo OTP Format:</span> Use format like AZ47E5 (2 letters + 2 numbers +
+                  1 letter + 1 number)
                 </p>
               </div>
             </div>
@@ -651,15 +655,15 @@ export default function RegisterPage() {
           {currentStep === 4 && (
             <div className="space-y-4">
               <p className="text-sm text-slate-600 mb-2">Choose the platform features you'd like access to</p>
-              
+
               <div className="space-y-3">
                 {availablePrivileges.map((privilege) => (
                   <div
                     key={privilege.id}
                     className={`p-4 rounded-xl border ${
                       formData.selectedPrivileges.includes(privilege.id)
-                        ? 'border-primary-300 bg-primary-50'
-                        : 'border-slate-200'
+                        ? "border-primary-300 bg-primary-50"
+                        : "border-slate-200"
                     }`}
                     onClick={() => handlePrivilegeToggle(privilege.id)}
                   >
@@ -675,10 +679,7 @@ export default function RegisterPage() {
                       <div className="flex-1">
                         <div className="flex items-center">
                           <span className="text-xl mr-2">{privilege.icon}</span>
-                          <Label
-                            htmlFor={privilege.id}
-                            className="text-base font-medium cursor-pointer"
-                          >
+                          <Label htmlFor={privilege.id} className="text-base font-medium cursor-pointer">
                             {privilege.label}
                           </Label>
                         </div>
@@ -711,11 +712,7 @@ export default function RegisterPage() {
                 <p className="text-slate-600 mb-6">One-time Registration Fee</p>
 
                 {!verificationStatus.payment ? (
-                  <Button
-                    onClick={handlePayment}
-                    disabled={isLoading}
-                    className="nexlink-btn w-full"
-                  >
+                  <Button onClick={handlePayment} disabled={isLoading} className="nexlink-btn w-full">
                     {isLoading ? "Processing..." : "Pay Now"}
                   </Button>
                 ) : (
@@ -798,4 +795,44 @@ export default function RegisterPage() {
                 </div>
               </div>
             </div>
-          \
+          )}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-8 pt-6 border-t border-slate-200">
+          {currentStep > 1 && (
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep(currentStep - 1)}
+              className="rounded-full border-slate-200"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          )}
+
+          <div className="ml-auto">
+            {currentStep < 6 ? (
+              <Button
+                onClick={() => setCurrentStep(currentStep + 1)}
+                disabled={!canProceedToNext()}
+                className="nexlink-btn"
+              >
+                Next
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={!formData.acceptedTerms || !formData.acceptedPrivacy}
+                className="nexlink-btn"
+              >
+                Submit Application
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

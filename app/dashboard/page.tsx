@@ -1,57 +1,42 @@
 "use client"
 
 import { useAuth } from "@/context/auth-context"
-import { Navigation } from "@/components/navigation"
 import { CXODashboard } from "@/components/dashboards/cxo-dashboard"
 import { MentorDashboard } from "@/components/dashboards/mentor-dashboard"
 import { AdminDashboard } from "@/components/dashboards/admin-dashboard"
-import { SuperAdminDashboard } from "@/components/dashboards/super-admin-dashboard"
-import { Skeleton } from "@/components/ui/skeleton"
+import { MobileFooter } from "@/components/mobile-footer"
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth()
+  const { user } = useAuth()
 
-  if (isLoading) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="container mx-auto py-6 px-4">
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-64" />
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-32" />
-              ))}
-            </div>
-          </div>
-        </main>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-slate-800">Loading...</h2>
+          <p className="text-slate-600">Please wait while we load your dashboard</p>
+        </div>
       </div>
     )
   }
 
-  if (!user) {
-    return <div>Please log in to access the dashboard.</div>
-  }
-
   const renderDashboard = () => {
     switch (user.role) {
-      case "cxo":
-        return <CXODashboard user={user} />
-      case "mentor":
-        return <MentorDashboard user={user} />
-      case "admin":
-        return <AdminDashboard user={user} />
-      case "super_admin":
-        return <SuperAdminDashboard user={user} />
+      case "CXO":
+        return <CXODashboard />
+      case "Mentor":
+        return <MentorDashboard />
+      case "Admin":
+        return <AdminDashboard />
       default:
-        return <CXODashboard user={user} />
+        return <CXODashboard />
     }
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <div className="min-h-screen bg-slate-50 pb-20">
       {renderDashboard()}
+      <MobileFooter />
     </div>
   )
 }
