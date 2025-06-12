@@ -3,15 +3,15 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/context/auth-context"
-import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "NexLink Hub - Executive Networking Platform",
-  description:
-    "An exclusive networking platform for C-level executives to connect, collaborate, and consult with peers across industries.",
+  title: "ExecSphere - Global Executive Network",
+  description: "A global sphere of executive minds connecting C-level professionals worldwide",
+  keywords: ["executives", "networking", "leadership", "C-level", "business"],
     generator: 'v0.dev'
 }
 

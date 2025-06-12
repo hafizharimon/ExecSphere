@@ -122,57 +122,6 @@ class McaApiService {
           lastAnnualReturnDate: "2023-12-31",
           lastBalanceSheetDate: "2023-03-31",
         },
-        U99999MH1917PTC000478: {
-          cin: "U99999MH1917PTC000478",
-          companyName: "Tata Sons Private Limited",
-          companyStatus: "Active",
-          companyCategory: "Company limited by shares",
-          companySubCategory: "Non-government company",
-          classOfCompany: "Private",
-          dateOfIncorporation: "1917-11-08",
-          registeredOfficeAddress: "Bombay House, 24 Homi Mody Street, Mumbai, Maharashtra, India",
-          authorizedCapital: 35000000000,
-          paidUpCapital: 27500000000,
-          directors: [
-            {
-              din: "00121863",
-              name: "N. Chandrasekaran",
-              designation: "Chairman",
-              appointmentDate: "2017-02-21",
-              status: "Active",
-            },
-            {
-              din: "00024713",
-              name: "Noel Tata",
-              designation: "Director",
-              appointmentDate: "2010-06-10",
-              status: "Active",
-            },
-            {
-              din: "00121454",
-              name: "Bhaskar Bhat",
-              designation: "Director",
-              appointmentDate: "2017-04-01",
-              status: "Active",
-            },
-            {
-              din: "00010812",
-              name: "Harish Manwani",
-              designation: "Independent Director",
-              appointmentDate: "2018-05-01",
-              status: "Active",
-            },
-            {
-              din: "00548091",
-              name: "Ajay Piramal",
-              designation: "Independent Director",
-              appointmentDate: "2016-08-25",
-              status: "Active",
-            },
-          ],
-          lastAnnualReturnDate: "2023-09-30",
-          lastBalanceSheetDate: "2023-03-31",
-        },
       }
 
       const companyData = mockCompanies[cin]
