@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,6 +26,8 @@ import {
   Briefcase,
   MapPin,
   Lock,
+  Verified,
+  Building2,
 } from "lucide-react"
 
 export default function RegisterPage() {
@@ -35,6 +39,13 @@ export default function RegisterPage() {
     email: "",
     organization: "",
     title: "",
+
+    // Company Information
+    legalEntityName: "",
+    cinNumber: "",
+    companyLinkedInPage: "",
+    mcaVerified: false,
+    directorVerified: false,
 
     // Additional Info
     industry: "",
@@ -65,8 +76,11 @@ export default function RegisterPage() {
     sms: false,
     aadhaar: false,
     payment: false,
+    mca: false,
+    linkedin: false,
   })
 
+  const [mcaData, setMcaData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { register, sendOTP, verifyPayment } = useAuth()
   const router = useRouter()
@@ -111,21 +125,105 @@ export default function RegisterPage() {
     },
   ]
 
-  const handleLinkedInConnect = () => {
-    toast({
-      title: "LinkedIn Connected",
-      description: "Profile data imported successfully",
-    })
+  const handleLinkedInConnect = async () => {
+    setIsLoading(true)
+    try {
+      // Simulate LinkedIn API call
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    setFormData((prev) => ({
-      ...prev,
-      linkedinProfile: "https://linkedin.com/in/demo-user",
-      name: "Demo Executive",
-      organization: "Demo Corporation",
-      title: "Chief Executive Officer",
-      industry: "Technology",
-      yearsExperience: "15",
-    }))
+      toast({
+        title: "LinkedIn Connected",
+        description: "Profile data imported successfully",
+      })
+
+      setFormData((prev) => ({
+        ...prev,
+        linkedinProfile: "https://linkedin.com/in/demo-user",
+        name: "Demo Executive",
+        organization: "Demo Corporation",
+        title: "Chief Executive Officer",
+        industry: "Technology",
+        yearsExperience: "15",
+        companyLinkedInPage: "https://linkedin.com/company/demo-corporation",
+      }))
+
+      setVerificationStatus((prev) => ({ ...prev, linkedin: true }))
+    } catch (error) {
+      toast({
+        title: "LinkedIn Connection Failed",
+        description: "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleMCAVerification = async () => {
+    if (!formData.cinNumber || !formData.legalEntityName) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter CIN number and legal entity name",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      // Simulate MCA API call
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+
+      // Mock MCA response
+      const mockMcaData = {
+        companyName: formData.legalEntityName,
+        cin: formData.cinNumber,
+        status: "Active",
+        directors: [
+          {
+            name: formData.name,
+            designation: "Managing Director",
+            din: "08123456",
+            appointmentDate: "2020-01-15",
+          },
+          {
+            name: "Jane Smith",
+            designation: "Director",
+            din: "08654321",
+            appointmentDate: "2020-01-15",
+          },
+        ],
+        registrationDate: "2020-01-15",
+        authorizedCapital: "10000000",
+        paidUpCapital: "5000000",
+      }
+
+      setMcaData(mockMcaData)
+      setVerificationStatus((prev) => ({
+        ...prev,
+        mca: true,
+        directorVerified: mockMcaData.directors.some((d) => d.name.toLowerCase().includes(formData.name.toLowerCase())),
+      }))
+
+      setFormData((prev) => ({
+        ...prev,
+        mcaVerified: true,
+        directorVerified: mockMcaData.directors.some((d) => d.name.toLowerCase().includes(formData.name.toLowerCase())),
+      }))
+
+      toast({
+        title: "MCA Verification Successful",
+        description: "Company details verified with Ministry of Corporate Affairs",
+      })
+    } catch (error) {
+      toast({
+        title: "MCA Verification Failed",
+        description: "Unable to verify company details",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSendOTP = async (type: "email" | "sms" | "aadhaar") => {
@@ -195,7 +293,7 @@ export default function RegisterPage() {
             title: "Payment Successful",
             description: "Registration fee paid successfully",
           })
-          setCurrentStep(6)
+          setCurrentStep(7)
         }, 2000)
       }
     } catch (error) {
@@ -234,14 +332,18 @@ export default function RegisterPage() {
   const canProceedToNext = () => {
     switch (currentStep) {
       case 1:
-        return formData.linkedinProfile && formData.name && formData.email
+        return verificationStatus.linkedin && formData.name && formData.email
       case 2:
-        return formData.companyEmail && formData.phone && formData.aadhaarNumber
+        return formData.legalEntityName && formData.cinNumber && formData.companyLinkedInPage
       case 3:
-        return verificationStatus.email && verificationStatus.sms && verificationStatus.aadhaar
+        return verificationStatus.mca
       case 4:
-        return formData.selectedPrivileges.length > 0
+        return formData.companyEmail && formData.phone && formData.aadhaarNumber
       case 5:
+        return verificationStatus.email && verificationStatus.sms && verificationStatus.aadhaar
+      case 6:
+        return formData.selectedPrivileges.length > 0
+      case 7:
         return verificationStatus.payment
       default:
         return true
@@ -253,14 +355,18 @@ export default function RegisterPage() {
       case 1:
         return "LinkedIn Integration"
       case 2:
-        return "Contact Information"
+        return "Company Information"
       case 3:
-        return "Verification"
+        return "MCA Verification"
       case 4:
-        return "Select Privileges"
+        return "Contact Information"
       case 5:
-        return "Payment"
+        return "Identity Verification"
       case 6:
+        return "Select Privileges"
+      case 7:
+        return "Payment"
+      case 8:
         return "Terms & Conditions"
       default:
         return "Registration"
@@ -283,11 +389,11 @@ export default function RegisterPage() {
         </div>
 
         {/* Progress Indicator */}
-        <div className="flex justify-between items-center mb-8">
-          {[1, 2, 3, 4, 5, 6].map((step) => (
+        <div className="flex justify-between items-center mb-8 overflow-x-auto">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
             <div
               key={step}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
                 step < currentStep
                   ? "bg-blue-500 text-white"
                   : step === currentStep
@@ -295,29 +401,42 @@ export default function RegisterPage() {
                     : "bg-slate-100 text-slate-400"
               }`}
             >
-              {step < currentStep ? <CheckCircle className="h-4 w-4" /> : step}
+              {step < currentStep ? <CheckCircle className="h-3 w-3" /> : step}
             </div>
           ))}
         </div>
 
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-slate-800">{getStepTitle()}</h2>
-          <p className="text-sm text-slate-500">Step {currentStep} of 6</p>
+          <p className="text-sm text-slate-500">Step {currentStep} of 8</p>
         </div>
 
         <div className="space-y-6">
           {/* Step 1: LinkedIn Integration */}
           {currentStep === 1 && (
             <div className="space-y-6">
+              <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-amber-800 font-medium">LinkedIn Profile Required</p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      A LinkedIn profile is mandatory to create an account on this platform.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Button
                 onClick={handleLinkedInConnect}
+                disabled={isLoading}
                 className="w-full flex items-center justify-center space-x-2 bg-[#0077B5] hover:bg-[#006699] text-white rounded-full py-3 px-4"
               >
                 <Linkedin className="h-5 w-5" />
-                <span>Connect with LinkedIn</span>
+                <span>{isLoading ? "Connecting..." : "Connect with LinkedIn"}</span>
               </Button>
 
-              {formData.linkedinProfile && (
+              {verificationStatus.linkedin && (
                 <div className="space-y-4 mt-4">
                   <div className="p-3 bg-green-50 rounded-xl border border-green-100 flex items-center">
                     <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
@@ -411,8 +530,189 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Step 2: Contact Information */}
+          {/* Step 2: Company Information */}
           {currentStep === 2 && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="legalEntityName" className="text-sm font-medium text-slate-700">
+                  Legal Entity Name *
+                </Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Building2 className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <Input
+                    id="legalEntityName"
+                    placeholder="Enter exact legal entity name"
+                    value={formData.legalEntityName}
+                    onChange={(e) => updateFormData("legalEntityName", e.target.value)}
+                    className="pl-10 rounded-xl border-slate-200"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Must match exactly with MCA records</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cinNumber" className="text-sm font-medium text-slate-700">
+                  CIN Number *
+                </Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Shield className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <Input
+                    id="cinNumber"
+                    placeholder="U12345AB2020PTC123456"
+                    value={formData.cinNumber}
+                    onChange={(e) => updateFormData("cinNumber", e.target.value.toUpperCase())}
+                    className="pl-10 rounded-xl border-slate-200"
+                    maxLength={21}
+                    required
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Corporate Identity Number from MCA</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyLinkedInPage" className="text-sm font-medium text-slate-700">
+                  Company LinkedIn Page *
+                </Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Linkedin className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <Input
+                    id="companyLinkedInPage"
+                    placeholder="https://linkedin.com/company/your-company"
+                    value={formData.companyLinkedInPage}
+                    onChange={(e) => updateFormData("companyLinkedInPage", e.target.value)}
+                    className="pl-10 rounded-xl border-slate-200"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-1">You must have admin privileges on this page</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="industry" className="text-sm font-medium text-slate-700">
+                    Industry
+                  </Label>
+                  <Select value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
+                    <SelectTrigger className="rounded-xl border-slate-200">
+                      <SelectValue placeholder="Select industry" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="Technology">Technology</SelectItem>
+                      <SelectItem value="Finance">Finance</SelectItem>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="Retail">Retail</SelectItem>
+                      <SelectItem value="Energy">Energy</SelectItem>
+                      <SelectItem value="Consulting">Consulting</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="region" className="text-sm font-medium text-slate-700">
+                    Region
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MapPin className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <Input
+                      id="region"
+                      placeholder="e.g., Mumbai"
+                      value={formData.region}
+                      onChange={(e) => updateFormData("region", e.target.value)}
+                      className="pl-10 rounded-xl border-slate-200"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: MCA Verification */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    MCA Verification
+                  </CardTitle>
+                  <CardDescription>Verify your company details with Ministry of Corporate Affairs</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <p className="text-sm text-blue-800">
+                      <span className="font-medium">Company:</span> {formData.legalEntityName}
+                    </p>
+                    <p className="text-sm text-blue-800">
+                      <span className="font-medium">CIN:</span> {formData.cinNumber}
+                    </p>
+                  </div>
+
+                  {!verificationStatus.mca ? (
+                    <Button onClick={handleMCAVerification} disabled={isLoading} className="w-full rounded-xl">
+                      {isLoading ? "Verifying with MCA..." : "Verify with MCA"}
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="p-3 bg-green-50 rounded-xl border border-green-100 flex items-center">
+                        <Verified className="h-5 w-5 text-green-500 mr-2" />
+                        <span className="text-green-700 text-sm font-medium">MCA Verified</span>
+                      </div>
+
+                      {mcaData && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-slate-800">Company Details</h4>
+                          <div className="p-3 bg-slate-50 rounded-xl space-y-2">
+                            <p className="text-sm">
+                              <span className="font-medium">Status:</span> {mcaData.status}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Registration Date:</span> {mcaData.registrationDate}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Authorized Capital:</span> ₹
+                              {Number.parseInt(mcaData.authorizedCapital).toLocaleString()}
+                            </p>
+                          </div>
+
+                          <h4 className="font-medium text-slate-800">Directors</h4>
+                          <div className="space-y-2">
+                            {mcaData.directors.map((director: any, index: number) => (
+                              <div key={index} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium">{director.name}</p>
+                                  <p className="text-xs text-slate-600">{director.designation}</p>
+                                </div>
+                                {director.name.toLowerCase().includes(formData.name.toLowerCase()) && (
+                                  <Badge className="bg-green-500 text-white">
+                                    <Verified className="h-3 w-3 mr-1" />
+                                    Verified
+                                  </Badge>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Step 4: Contact Information */}
+          {currentStep === 4 && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="companyEmail" className="text-sm font-medium text-slate-700">
@@ -476,52 +776,11 @@ export default function RegisterPage() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Required for enhanced security verification</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="industry" className="text-sm font-medium text-slate-700">
-                    Industry
-                  </Label>
-                  <Select value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
-                    <SelectTrigger className="rounded-xl border-slate-200">
-                      <SelectValue placeholder="Select industry" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="Technology">Technology</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="Retail">Retail</SelectItem>
-                      <SelectItem value="Energy">Energy</SelectItem>
-                      <SelectItem value="Consulting">Consulting</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="region" className="text-sm font-medium text-slate-700">
-                    Region
-                  </Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <Input
-                      id="region"
-                      placeholder="e.g., Mumbai"
-                      value={formData.region}
-                      onChange={(e) => updateFormData("region", e.target.value)}
-                      className="pl-10 rounded-xl border-slate-200"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* Step 3: OTP Verification */}
-          {currentStep === 3 && (
+          {/* Step 5: OTP Verification */}
+          {currentStep === 5 && (
             <div className="space-y-6">
               {/* Email OTP */}
               <div className="space-y-3 p-4 bg-white rounded-xl border border-slate-200">
@@ -651,8 +910,8 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Step 4: Privilege Selection */}
-          {currentStep === 4 && (
+          {/* Step 6: Privilege Selection */}
+          {currentStep === 6 && (
             <div className="space-y-4">
               <p className="text-sm text-slate-600 mb-2">Choose the platform features you'd like access to</p>
 
@@ -701,8 +960,8 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Step 5: Payment */}
-          {currentStep === 5 && (
+          {/* Step 7: Payment */}
+          {currentStep === 7 && (
             <div className="space-y-6">
               <div className="p-6 bg-white rounded-xl border-2 border-slate-200 text-center">
                 <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
@@ -747,8 +1006,8 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Step 6: Terms and Submission */}
-          {currentStep === 6 && (
+          {/* Step 8: Terms and Submission */}
+          {currentStep === 8 && (
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-start space-x-3 p-4 bg-white rounded-xl border border-slate-200">
@@ -798,6 +1057,33 @@ export default function RegisterPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Verification Summary */}
+              <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                <h4 className="font-medium text-green-800 mb-3">Verification Summary</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700">LinkedIn Profile</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700">MCA Verification</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700">Director Verification</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700">Identity Verification</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700">Payment Completed</span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -816,7 +1102,7 @@ export default function RegisterPage() {
           )}
 
           <div className="ml-auto">
-            {currentStep < 6 ? (
+            {currentStep < 8 ? (
               <Button
                 onClick={() => setCurrentStep(currentStep + 1)}
                 disabled={!canProceedToNext()}

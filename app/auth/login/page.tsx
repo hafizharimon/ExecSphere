@@ -1,48 +1,54 @@
 "use client"
-
+import { useState } from "react"
 import type React from "react"
 
-import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Mail, Lock, Linkedin, Github, Twitter } from "lucide-react"
+import { ArrowLeft, Mail, Lock, Linkedin, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("test@demo.com")
-  const [otp, setOtp] = useState("")
-  const [isOtpSent, setIsOtpSent] = useState(false)
+  const [loginMethod, setLoginMethod] = useState<"email" | "linkedin">("email")
+  const [formData, setFormData] = useState({
+    email: "",
+    otp: "",
+  })
+  const [showOTP, setShowOTP] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [otpSent, setOtpSent] = useState(false)
+
   const { login, sendOTP } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
 
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const handleSendOTP = async () => {
+    if (!formData.email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your company email address",
+        variant: "destructive",
+      })
+      return
+    }
 
+    setIsLoading(true)
     try {
-      const success = await sendOTP(email, "email")
+      const success = await sendOTP(formData.email, "email")
       if (success) {
-        setIsOtpSent(true)
+        setOtpSent(true)
         toast({
-          title: "OTP Sent!",
-          description: "Please check your email for the verification code.",
-        })
-      } else {
-        toast({
-          title: "Failed to send OTP",
-          description: "Please try again.",
-          variant: "destructive",
+          title: "OTP Sent",
+          description: "Check your email for the verification code",
         })
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
+        description: "Failed to send OTP",
         variant: "destructive",
       })
     } finally {
@@ -52,27 +58,36 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
 
+    if (!formData.email || !formData.otp) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both email and OTP",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
     try {
-      const success = await login(email, otp)
+      const success = await login(formData.email, formData.otp)
       if (success) {
         toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
+          title: "Login Successful",
+          description: "Welcome back!",
         })
         router.push("/dashboard")
       } else {
         toast({
-          title: "Login failed",
-          description: "Invalid email or OTP. Please check your credentials.",
+          title: "Login Failed",
+          description: "Invalid email or OTP",
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
+        title: "Login Error",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -80,146 +95,203 @@ export default function LoginPage() {
     }
   }
 
-  const validateOTP = (value: string) => {
-    const otpPattern = /^[A-Z]{2}[0-9]{2}[A-Z][0-9]$/
-    return otpPattern.test(value)
-  }
+  const handleLinkedInLogin = async () => {
+    setIsLoading(true)
+    try {
+      // Simulate LinkedIn OAuth flow
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-  const formatOTP = (value: string) => {
-    const cleaned = value.replace(/[^A-Z0-9]/gi, "").toUpperCase()
-    return cleaned.slice(0, 6)
+      // For demo, use a predefined LinkedIn user
+      const success = await login("cxo@demo.com", "AZ47E5")
+      if (success) {
+        toast({
+          title: "LinkedIn Login Successful",
+          description: "Welcome back!",
+        })
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      toast({
+        title: "LinkedIn Login Failed",
+        description: "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="p-4">
-        <Link href="/" className="inline-flex items-center text-slate-600">
+        <Link href="/" className="inline-flex items-center text-slate-600 hover:text-slate-800">
           <ArrowLeft className="h-5 w-5 mr-2" />
-          Back
+          Back to Home
         </Link>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-6">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-8 h-8 text-primary-500"
-              >
-                <path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path>
-              </svg>
-            </div>
+      <div className="container max-w-md mx-auto px-6 py-16">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
+          <p className="text-slate-600">Sign in to your executive account</p>
+        </div>
 
-            <h1 className="text-2xl font-bold text-slate-900">Welcome back!</h1>
-            <p className="text-slate-500 mt-2">
-              {!isOtpSent ? "Login to your account" : "Enter the verification code sent to your email"}
-            </p>
-          </div>
+        {/* Login Method Toggle */}
+        <div className="flex rounded-2xl bg-slate-100 p-1 mb-8">
+          <button
+            onClick={() => setLoginMethod("email")}
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+              loginMethod === "email" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Mail className="h-4 w-4 inline mr-2" />
+            Email & OTP
+          </button>
+          <button
+            onClick={() => setLoginMethod("linkedin")}
+            className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+              loginMethod === "linkedin" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Linkedin className="h-4 w-4 inline mr-2" />
+            LinkedIn
+          </button>
+        </div>
 
-          {!isOtpSent ? (
-            <form onSubmit={handleSendOTP} className="space-y-6">
+        {loginMethod === "email" ? (
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                Company Email
+              </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-slate-400" />
                 </div>
                 <Input
+                  id="email"
                   type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="nexlink-input pl-10"
+                  placeholder="your@company.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  className="pl-10 rounded-xl border-slate-200 h-12"
                   required
                 />
               </div>
+            </div>
 
-              <Button type="submit" className="nexlink-btn w-full" disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send Verification Code"}
+            {!otpSent ? (
+              <Button
+                type="button"
+                onClick={handleSendOTP}
+                disabled={isLoading || !formData.email}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl h-12"
+              >
+                {isLoading ? "Sending OTP..." : "Send OTP"}
               </Button>
-
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200"></div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="otp" className="text-sm font-medium text-slate-700">
+                    Enter OTP
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <Input
+                      id="otp"
+                      type={showOTP ? "text" : "password"}
+                      placeholder="Enter 6-digit OTP"
+                      value={formData.otp}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, otp: e.target.value.toUpperCase() }))}
+                      className="pl-10 pr-10 rounded-xl border-slate-200 h-12 text-center font-mono"
+                      maxLength={6}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOTP(!showOTP)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showOTP ? (
+                        <EyeOff className="h-5 w-5 text-slate-400" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-slate-400" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Demo OTP format: AZ47E5 (2 letters + 2 numbers + 1 letter + 1 number)
+                  </p>
                 </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="px-2 bg-white text-slate-500">Or sign in with</span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <Button variant="outline" className="rounded-full border-slate-200">
-                  <Linkedin className="h-5 w-5 text-[#0077B5]" />
-                </Button>
-                <Button variant="outline" className="rounded-full border-slate-200">
-                  <Github className="h-5 w-5" />
-                </Button>
-                <Button variant="outline" className="rounded-full border-slate-200">
-                  <Twitter className="h-5 w-5 text-[#1DA1F2]" />
-                </Button>
-              </div>
-
-              <div className="text-center mt-6">
-                <p className="text-sm text-slate-600">
-                  Don't have an account?{" "}
-                  <Link href="/auth/register" className="text-primary-600 font-medium">
-                    Sign up
-                  </Link>
-                </p>
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-                <p className="text-sm text-blue-800 font-medium">Demo Credentials:</p>
-                <p className="text-xs text-blue-700 mt-1">Email: test@demo.com</p>
-                <p className="text-xs text-blue-700">OTP Format: AZ47E5</p>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" />
-                </div>
-                <Input
-                  type="text"
-                  placeholder="Enter OTP (e.g., AZ47E5)"
-                  value={otp}
-                  onChange={(e) => setOtp(formatOTP(e.target.value))}
-                  className="nexlink-input pl-10 text-center text-lg tracking-widest font-mono"
-                  maxLength={6}
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-500">Format: 2 letters + 2 numbers + 1 letter + 1 number</p>
-                {otp && (
-                  <span className={`text-xs font-medium ${validateOTP(otp) ? "text-green-600" : "text-red-600"}`}>
-                    {validateOTP(otp) ? "Valid" : "Invalid"}
-                  </span>
-                )}
-              </div>
-
-              <Button type="submit" className="nexlink-btn w-full" disabled={isLoading || !validateOTP(otp)}>
-                {isLoading ? "Verifying..." : "Sign In"}
-              </Button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsOtpSent(false)}
-                  className="text-sm text-primary-600 font-medium"
+                <Button
+                  type="submit"
+                  disabled={isLoading || !formData.otp}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl h-12"
                 >
-                  Change email address
-                </button>
-              </div>
-            </form>
-          )}
+                  {isLoading ? "Signing In..." : "Sign In"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleSendOTP}
+                  disabled={isLoading}
+                  className="w-full text-blue-600 hover:text-blue-700 rounded-xl"
+                >
+                  Resend OTP
+                </Button>
+              </>
+            )}
+          </form>
+        ) : (
+          <div className="space-y-6">
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <p className="text-sm text-blue-800 text-center">Sign in securely with your LinkedIn account</p>
+            </div>
+
+            <Button
+              onClick={handleLinkedInLogin}
+              disabled={isLoading}
+              className="w-full bg-[#0077B5] hover:bg-[#006699] text-white rounded-xl h-12 flex items-center justify-center space-x-2"
+            >
+              <Linkedin className="h-5 w-5" />
+              <span>{isLoading ? "Connecting..." : "Continue with LinkedIn"}</span>
+            </Button>
+          </div>
+        )}
+
+        {/* Demo Credentials */}
+        <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-100">
+          <h4 className="font-medium text-amber-800 mb-2">Demo Credentials</h4>
+          <div className="space-y-1 text-sm text-amber-700">
+            <p>
+              <strong>Super Admin:</strong> test@demo.com
+            </p>
+            <p>
+              <strong>CXO:</strong> cxo@demo.com
+            </p>
+            <p>
+              <strong>Mentor:</strong> mentor@demo.com
+            </p>
+            <p>
+              <strong>Pending User:</strong> pending@demo.com
+            </p>
+            <p>
+              <strong>OTP:</strong> AZ47E5
+            </p>
+          </div>
+        </div>
+
+        <div className="text-center mt-8">
+          <p className="text-sm text-slate-600">
+            Don't have an account?{" "}
+            <Link href="/auth/register" className="text-blue-600 font-medium hover:text-blue-700">
+              Register here
+            </Link>
+          </p>
         </div>
       </div>
     </div>
