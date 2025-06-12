@@ -195,7 +195,7 @@ export default function RegisterPage() {
             title: "Payment Successful",
             description: "Registration fee paid successfully",
           })
-          setCurrentStep(5)
+          setCurrentStep(6)
         }, 2000)
       }
     } catch (error) {
@@ -289,9 +289,9 @@ export default function RegisterPage() {
               key={step}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
                 step < currentStep
-                  ? "bg-primary text-white"
+                  ? "bg-blue-500 text-white"
                   : step === currentStep
-                    ? "bg-primary-100 text-primary-600 ring-2 ring-primary-200"
+                    ? "bg-blue-100 text-blue-600 ring-2 ring-blue-200"
                     : "bg-slate-100 text-slate-400"
               }`}
             >
@@ -337,7 +337,7 @@ export default function RegisterPage() {
                           id="name"
                           value={formData.name}
                           onChange={(e) => updateFormData("name", e.target.value)}
-                          className="nexlink-input pl-10"
+                          className="pl-10 rounded-xl border-slate-200"
                           required
                         />
                       </div>
@@ -356,7 +356,7 @@ export default function RegisterPage() {
                           type="email"
                           value={formData.email}
                           onChange={(e) => updateFormData("email", e.target.value)}
-                          className="nexlink-input pl-10"
+                          className="pl-10 rounded-xl border-slate-200"
                           required
                         />
                       </div>
@@ -374,7 +374,7 @@ export default function RegisterPage() {
                           id="organization"
                           value={formData.organization}
                           onChange={(e) => updateFormData("organization", e.target.value)}
-                          className="nexlink-input pl-10"
+                          className="pl-10 rounded-xl border-slate-200"
                           required
                         />
                       </div>
@@ -389,7 +389,7 @@ export default function RegisterPage() {
                           <Briefcase className="h-5 w-5 text-slate-400" />
                         </div>
                         <Select value={formData.title} onValueChange={(value) => updateFormData("title", value)}>
-                          <SelectTrigger className="nexlink-input pl-10">
+                          <SelectTrigger className="pl-10 rounded-xl border-slate-200">
                             <SelectValue placeholder="Select your role" />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl">
@@ -428,7 +428,7 @@ export default function RegisterPage() {
                     placeholder="your@company.com"
                     value={formData.companyEmail}
                     onChange={(e) => updateFormData("companyEmail", e.target.value)}
-                    className="nexlink-input pl-10"
+                    className="pl-10 rounded-xl border-slate-200"
                     required
                   />
                 </div>
@@ -449,7 +449,7 @@ export default function RegisterPage() {
                     placeholder="+91 9876543210"
                     value={formData.phone}
                     onChange={(e) => updateFormData("phone", e.target.value)}
-                    className="nexlink-input pl-10"
+                    className="pl-10 rounded-xl border-slate-200"
                     required
                   />
                 </div>
@@ -469,7 +469,7 @@ export default function RegisterPage() {
                     placeholder="1234 5678 9012"
                     value={formData.aadhaarNumber}
                     onChange={(e) => updateFormData("aadhaarNumber", e.target.value)}
-                    className="nexlink-input pl-10"
+                    className="pl-10 rounded-xl border-slate-200"
                     maxLength={14}
                     required
                   />
@@ -483,7 +483,7 @@ export default function RegisterPage() {
                     Industry
                   </Label>
                   <Select value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
-                    <SelectTrigger className="nexlink-input">
+                    <SelectTrigger className="rounded-xl border-slate-200">
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
@@ -512,7 +512,7 @@ export default function RegisterPage() {
                       placeholder="e.g., Mumbai"
                       value={formData.region}
                       onChange={(e) => updateFormData("region", e.target.value)}
-                      className="nexlink-input pl-10"
+                      className="pl-10 rounded-xl border-slate-200"
                     />
                   </div>
                 </div>
@@ -550,7 +550,7 @@ export default function RegisterPage() {
                         value={formData.emailOTP}
                         onChange={(e) => updateFormData("emailOTP", e.target.value.toUpperCase())}
                         maxLength={6}
-                        className="nexlink-input pl-10 text-center font-mono"
+                        className="pl-10 text-center font-mono rounded-xl border-slate-200"
                       />
                     </div>
                     <Button
@@ -591,7 +591,7 @@ export default function RegisterPage() {
                         value={formData.smsOTP}
                         onChange={(e) => updateFormData("smsOTP", e.target.value.toUpperCase())}
                         maxLength={6}
-                        className="nexlink-input pl-10 text-center font-mono"
+                        className="pl-10 text-center font-mono rounded-xl border-slate-200"
                       />
                     </div>
                     <Button onClick={() => handleVerifyOTP("sms")} disabled={!formData.smsOTP} className="rounded-full">
@@ -628,7 +628,7 @@ export default function RegisterPage() {
                         value={formData.aadhaarOTP}
                         onChange={(e) => updateFormData("aadhaarOTP", e.target.value.toUpperCase())}
                         maxLength={6}
-                        className="nexlink-input pl-10 text-center font-mono"
+                        className="pl-10 text-center font-mono rounded-xl border-slate-200"
                       />
                     </div>
                     <Button
@@ -662,7 +662,7 @@ export default function RegisterPage() {
                     key={privilege.id}
                     className={`p-4 rounded-xl border ${
                       formData.selectedPrivileges.includes(privilege.id)
-                        ? "border-primary-300 bg-primary-50"
+                        ? "border-blue-300 bg-blue-50"
                         : "border-slate-200"
                     }`}
                     onClick={() => handlePrivilegeToggle(privilege.id)}
@@ -705,14 +705,18 @@ export default function RegisterPage() {
           {currentStep === 5 && (
             <div className="space-y-6">
               <div className="p-6 bg-white rounded-xl border-2 border-slate-200 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                  <CreditCard className="h-8 w-8 text-primary-500" />
+                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
+                  <CreditCard className="h-8 w-8 text-blue-500" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-1">₹1,000</h3>
                 <p className="text-slate-600 mb-6">One-time Registration Fee</p>
 
                 {!verificationStatus.payment ? (
-                  <Button onClick={handlePayment} disabled={isLoading} className="nexlink-btn w-full">
+                  <Button
+                    onClick={handlePayment}
+                    disabled={isLoading}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3"
+                  >
                     {isLoading ? "Processing..." : "Pay Now"}
                   </Button>
                 ) : (
@@ -757,7 +761,7 @@ export default function RegisterPage() {
                   </div>
                   <Label htmlFor="terms" className="text-sm cursor-pointer">
                     I accept the{" "}
-                    <Link href="/terms" className="text-primary-600 font-medium">
+                    <Link href="/terms" className="text-blue-600 font-medium">
                       Terms of Service
                     </Link>{" "}
                     and understand that my application will be reviewed by the Super Admin.
@@ -774,7 +778,7 @@ export default function RegisterPage() {
                   </div>
                   <Label htmlFor="privacy" className="text-sm cursor-pointer">
                     I accept the{" "}
-                    <Link href="/privacy" className="text-primary-600 font-medium">
+                    <Link href="/privacy" className="text-blue-600 font-medium">
                       Privacy Policy
                     </Link>{" "}
                     and consent to data processing.
@@ -816,7 +820,7 @@ export default function RegisterPage() {
               <Button
                 onClick={() => setCurrentStep(currentStep + 1)}
                 disabled={!canProceedToNext()}
-                className="nexlink-btn"
+                className="bg-blue-500 hover:bg-blue-600 text-white rounded-full"
               >
                 Next
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -825,7 +829,7 @@ export default function RegisterPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={!formData.acceptedTerms || !formData.acceptedPrivacy}
-                className="nexlink-btn"
+                className="bg-blue-500 hover:bg-blue-600 text-white rounded-full"
               >
                 Submit Application
               </Button>
