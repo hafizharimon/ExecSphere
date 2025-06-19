@@ -16,82 +16,12 @@ import {
 } from "lucide-react"
 
 export default function LandingPage() {
-  const features = [
-    {
-      icon: Users,
-      title: "Smart Connections",
-      description: "AI-powered networking with C-level executives across industries",
-      gradient: "from-blue-500 to-cyan-500",
-    },
-    {
-      icon: MessageSquare,
-      title: "Secure Messaging",
-      description: "Encrypted conversations and role-specific discussion forums",
-      gradient: "from-purple-500 to-pink-500",
-    },
-    {
-      icon: Calendar,
-      title: "Exclusive Events",
-      description: "Private webinars, summits, and networking opportunities",
-      gradient: "from-green-500 to-emerald-500",
-    },
-    {
-      icon: Shield,
-      title: "Verified Network",
-      description: "Invite-only platform with rigorous executive verification",
-      gradient: "from-orange-500 to-red-500",
-    },
-    {
-      icon: Award,
-      title: "Mentorship Hub",
-      description: "Connect with seasoned executives or share your expertise",
-      gradient: "from-indigo-500 to-purple-500",
-    },
-    {
-      icon: Globe,
-      title: "Global Reach",
-      description: "Connect with leaders across continents and industries",
-      gradient: "from-teal-500 to-blue-500",
-    },
-  ]
-
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "CTO, InnovateTech",
-      content: "NexLink Hub has revolutionized my professional networking. The quality of connections is unmatched.",
-      rating: 5,
-      avatar: "SC",
-    },
-    {
-      name: "Michael Rodriguez",
-      role: "CFO, Global Finance",
-      content: "The mentorship opportunities have been invaluable for both learning and guiding other executives.",
-      rating: 5,
-      avatar: "MR",
-    },
-    {
-      name: "Jennifer Kim",
-      role: "CEO, HealthTech Solutions",
-      content: "Finally, a platform designed specifically for C-level professionals with authentic connections.",
-      rating: 5,
-      avatar: "JK",
-    },
-  ]
-
-  const stats = [
-    { number: "1,200+", label: "Verified Executives", icon: Users },
-    { number: "50+", label: "Industries", icon: Building2 },
-    { number: "25+", label: "Countries", icon: Globe },
-    { number: "98%", label: "Satisfaction", icon: Star },
-  ]
-
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <header className="sticky top-0 z-50 px-4 lg:px-6 h-16 flex items-center glass-effect border-b border-white/20">
+      <header className="sticky top-0 z-50 px-4 lg:px-6 h-16 flex items-center bg-white/80 backdrop-blur-sm border-b border-white/20">
         <Link href="/" className="flex items-center justify-center">
-          <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
             <Building2 className="h-5 w-5 text-white" />
           </div>
           <span className="ml-3 font-bold text-xl bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
@@ -103,7 +33,10 @@ export default function LandingPage() {
             Login
           </Link>
           <Link href="/auth/register">
-            <Button size="sm" className="rounded-full gradient-bg border-0 shadow-lg hover:shadow-xl transition-all">
+            <Button
+              size="sm"
+              className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 border-0 shadow-lg hover:shadow-xl transition-all"
+            >
               Join Network
             </Button>
           </Link>
@@ -113,8 +46,8 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 lg:py-40 overflow-hidden">
-          <div className="absolute inset-0 gradient-bg opacity-10"></div>
-          <div className="container px-4 md:px-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-10"></div>
+          <div className="container px-4 md:px-6 relative mx-auto max-w-7xl">
             <div className="flex flex-col items-center space-y-8 text-center">
               <Badge variant="secondary" className="mb-4 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm">
                 <Sparkles className="h-4 w-4 mr-2 text-blue-600" />
@@ -139,7 +72,7 @@ export default function LandingPage() {
                 <Link href="/auth/register" className="flex-1">
                   <Button
                     size="lg"
-                    className="w-full rounded-2xl gradient-bg border-0 shadow-xl hover:shadow-2xl transition-all text-lg py-6"
+                    className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 border-0 shadow-xl hover:shadow-2xl transition-all text-lg py-6"
                   >
                     Get Started
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -149,7 +82,7 @@ export default function LandingPage() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="w-full rounded-2xl border-2 border-blue-200 hover:border-blue-300 text-lg py-6"
+                    className="w-full rounded-2xl border-2 border-blue-200 hover:border-blue-300 text-lg py-6 bg-white text-slate-800"
                   >
                     Learn More
                   </Button>
@@ -176,27 +109,46 @@ export default function LandingPage() {
 
         {/* Stats Section */}
         <section className="w-full py-16 bg-white/50 backdrop-blur-sm">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 mx-auto max-w-7xl">
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-              {stats.map((stat, index) => (
-                <Card
-                  key={index}
-                  className="text-center p-6 rounded-2xl card-shadow border-0 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all"
-                >
-                  <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center mx-auto mb-4">
-                    <stat.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">{stat.number}</div>
-                  <p className="text-slate-600">{stat.label}</p>
-                </Card>
-              ))}
+              <Card className="text-center p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">1,200+</div>
+                <p className="text-slate-600">Verified Executives</p>
+              </Card>
+
+              <Card className="text-center p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">50+</div>
+                <p className="text-slate-600">Industries</p>
+              </Card>
+
+              <Card className="text-center p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <Globe className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">25+</div>
+                <p className="text-slate-600">Countries</p>
+              </Card>
+
+              <Card className="text-center p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 bg-white/80 backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <Star className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">98%</div>
+                <p className="text-slate-600">Satisfaction</p>
+              </Card>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
         <section id="features" className="w-full py-20 md:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container px-4 md:px-6 mx-auto max-w-7xl">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4">
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -209,66 +161,85 @@ export default function LandingPage() {
             </div>
 
             <div className="grid gap-8 lg:grid-cols-3">
-              {features.map((feature, index) => (
-                <Card
-                  key={index}
-                  className="group p-6 rounded-2xl card-shadow border-0 bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-                >
-                  <CardHeader className="text-center pb-4">
-                    <div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}
-                    >
-                      <feature.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <CardTitle className="text-xl mb-2">{feature.title}</CardTitle>
-                    <CardDescription className="text-base text-slate-600">{feature.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+              <Card className="group p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Users className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">Smart Connections</CardTitle>
+                  <CardDescription className="text-base text-slate-600">
+                    AI-powered networking with C-level executives across industries
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-        {/* Testimonials Section */}
-        <section className="w-full py-20 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Trusted by Industry Leaders</h2>
-              <p className="text-lg text-slate-600">See what executives are saying about NexLink Hub</p>
-            </div>
+              <Card className="group p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <MessageSquare className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">Secure Messaging</CardTitle>
+                  <CardDescription className="text-base text-slate-600">
+                    Encrypted conversations and role-specific discussion forums
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {testimonials.map((testimonial, index) => (
-                <Card key={index} className="p-6 rounded-2xl card-shadow border-0 bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <div className="flex items-center space-x-1 mb-4">
-                      {Array.from({ length: testimonial.rating }).map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <CardDescription className="text-base italic text-slate-700 mb-6">
-                      "{testimonial.content}"
-                    </CardDescription>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full gradient-bg flex items-center justify-center">
-                        <span className="text-white font-medium">{testimonial.avatar}</span>
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{testimonial.name}</CardTitle>
-                        <p className="text-sm text-slate-600">{testimonial.role}</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+              <Card className="group p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Calendar className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">Exclusive Events</CardTitle>
+                  <CardDescription className="text-base text-slate-600">
+                    Private webinars, summits, and networking opportunities
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="group p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Shield className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">Verified Network</CardTitle>
+                  <CardDescription className="text-base text-slate-600">
+                    Invite-only platform with rigorous executive verification
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="group p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Award className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">Mentorship Hub</CardTitle>
+                  <CardDescription className="text-base text-slate-600">
+                    Connect with seasoned executives or share your expertise
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="group p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-teal-500 to-blue-500 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Globe className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl mb-2">Global Reach</CardTitle>
+                  <CardDescription className="text-base text-slate-600">
+                    Connect with leaders across continents and industries
+                  </CardDescription>
+                </CardHeader>
+              </Card>
             </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="w-full py-20 md:py-32 gradient-bg text-white relative overflow-hidden">
+        <section className="w-full py-20 md:py-32 bg-gradient-to-r from-blue-600 to-purple-600 text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-black/10"></div>
-          <div className="container px-4 md:px-6 relative">
+          <div className="container px-4 md:px-6 relative mx-auto max-w-7xl">
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="space-y-4">
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
@@ -293,9 +264,9 @@ export default function LandingPage() {
                 </Link>
                 <Link href="/auth/login" className="flex-1">
                   <Button
-                    size="lg"
                     variant="outline"
-                    className="w-full rounded-2xl text-lg py-6 border-white/30 text-white hover:bg-white/10"
+                    size="lg"
+                    className="w-full rounded-2xl text-lg py-6 border-white/30 text-white hover:bg-white/10 bg-transparent"
                   >
                     Already a Member?
                   </Button>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CalendarDays, Clock, MapPin, Users, Search } from "lucide-react"
 import Link from "next/link"
+import { useAnalyticsContext } from "@/components/analytics-provider"
 
 const events = [
   {
@@ -71,6 +72,8 @@ export default function EventsPage() {
   const [filterType, setFilterType] = useState("all")
   const [filterIndustry, setFilterIndustry] = useState("all")
 
+  const { trackEventParticipation } = useAnalyticsContext()
+
   const filteredEvents = events.filter((event) => {
     const matchesSearch =
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,6 +83,11 @@ export default function EventsPage() {
 
     return matchesSearch && matchesType && matchesIndustry
   })
+
+  const handleEventRegistration = (eventId: string, eventType: string) => {
+    trackEventParticipation(eventId, eventType, "register")
+    // Handle actual registration logic here
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -178,7 +186,9 @@ export default function EventsPage() {
                     View Details
                   </Button>
                 ) : (
-                  <Button className="flex-1">Register</Button>
+                  <Button className="flex-1" onClick={() => handleEventRegistration(event.id.toString(), event.type)}>
+                    Register
+                  </Button>
                 )}
                 <Button variant="ghost" size="sm">
                   Share
