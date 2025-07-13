@@ -1,23 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
-/**
- * Custom hook that debounces a value
- * @param value - The value to debounce
- * @param delay - The delay in milliseconds
- * @returns The debounced value
- */
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
   useEffect(() => {
-    // Set up a timer to update the debounced value after the delay
     const handler = setTimeout(() => {
       setDebouncedValue(value)
     }, delay)
 
-    // Clean up the timer if the value changes before the delay is complete
     return () => {
       clearTimeout(handler)
     }
@@ -26,24 +18,31 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-/**
- * Custom hook that debounces a callback function
- * @param callback - The callback function to debounce
- * @param delay - The delay in milliseconds
- * @returns The debounced callback function
- */
 export function useDebouncedCallback<T extends (...args: any[]) => any>(callback: T, delay: number): T {
-  const [debouncedCallback, setDebouncedCallback] = useState<T | null>(null)
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout>()
+
+  const debouncedCallback = useCallback(
+    (...args: Parameters<T>) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
+
+      const newTimer = setTimeout(() => {
+        callback(...args)
+      }, delay)
+
+      setDebounceTimer(newTimer)
+    },
+    [callback, delay, debounceTimer],
+  ) as T
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedCallback(() => callback)
-    }, delay)
-
     return () => {
-      clearTimeout(handler)
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
     }
-  }, [callback, delay])
+  }, [debounceTimer])
 
-  return (debouncedCallback || callback) as T
+  return debouncedCallback
 }

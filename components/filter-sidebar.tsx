@@ -1,19 +1,22 @@
 "use client"
+
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Filter } from "lucide-react"
+import { Filter, X } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-interface FilterOptions {
+export interface FilterOptions {
   expertise: string[]
   experience: [number, number]
   hourlyRate: [number, number]
-  rating: number
   location: string[]
+  languages: string[]
+  rating: number
   availability: string[]
   verified: boolean
 }
@@ -21,219 +24,295 @@ interface FilterOptions {
 interface FilterSidebarProps {
   filters: FilterOptions
   onFiltersChange: (filters: FilterOptions) => void
-  onClearFilters: () => void
   className?: string
+  availableOptions?: {
+    expertise: string[]
+    locations: string[]
+    languages: string[]
+    availability: string[]
+  }
 }
 
-const expertiseOptions = [
-  "Strategy & Leadership",
-  "Digital Transformation",
-  "Operations",
-  "Finance & Investment",
-  "Marketing & Sales",
-  "Technology",
-  "Human Resources",
-  "Product Management",
-  "Business Development",
-  "Entrepreneurship",
-]
+export function FilterSidebar({
+  filters,
+  onFiltersChange,
+  className,
+  availableOptions = {
+    expertise: [
+      "Leadership",
+      "Strategy",
+      "Marketing",
+      "Sales",
+      "Finance",
+      "Operations",
+      "Technology",
+      "HR",
+      "Product Management",
+      "Business Development",
+      "Consulting",
+      "Entrepreneurship",
+    ],
+    locations: [
+      "Mumbai",
+      "Delhi",
+      "Bangalore",
+      "Chennai",
+      "Hyderabad",
+      "Pune",
+      "Kolkata",
+      "Ahmedabad",
+      "Jaipur",
+      "Remote",
+    ],
+    languages: ["English", "Hindi", "Tamil", "Telugu", "Marathi", "Gujarati", "Bengali"],
+    availability: ["Morning", "Afternoon", "Evening", "Weekend"],
+  },
+}: FilterSidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
-const locationOptions = [
-  "Mumbai",
-  "Delhi",
-  "Bangalore",
-  "Chennai",
-  "Hyderabad",
-  "Pune",
-  "Kolkata",
-  "Ahmedabad",
-  "Remote",
-]
+  const handleExpertiseChange = (expertise: string, checked: boolean) => {
+    const newExpertise = checked ? [...filters.expertise, expertise] : filters.expertise.filter((e) => e !== expertise)
 
-const availabilityOptions = ["Immediate", "Within 24 hours", "Within 3 days", "Within a week", "Flexible"]
+    onFiltersChange({ ...filters, expertise: newExpertise })
+  }
 
-export function FilterSidebar({ filters, onFiltersChange, onClearFilters, className = "" }: FilterSidebarProps) {
-  const updateFilter = (key: keyof FilterOptions, value: any) => {
+  const handleLocationChange = (location: string, checked: boolean) => {
+    const newLocation = checked ? [...filters.location, location] : filters.location.filter((l) => l !== location)
+
+    onFiltersChange({ ...filters, location: newLocation })
+  }
+
+  const handleLanguageChange = (language: string, checked: boolean) => {
+    const newLanguages = checked ? [...filters.languages, language] : filters.languages.filter((l) => l !== language)
+
+    onFiltersChange({ ...filters, languages: newLanguages })
+  }
+
+  const handleAvailabilityChange = (availability: string, checked: boolean) => {
+    const newAvailability = checked
+      ? [...filters.availability, availability]
+      : filters.availability.filter((a) => a !== availability)
+
+    onFiltersChange({ ...filters, availability: newAvailability })
+  }
+
+  const clearAllFilters = () => {
     onFiltersChange({
-      ...filters,
-      [key]: value,
+      expertise: [],
+      experience: [0, 30],
+      hourlyRate: [0, 10000],
+      location: [],
+      languages: [],
+      rating: 0,
+      availability: [],
+      verified: false,
     })
   }
 
-  const toggleExpertise = (expertise: string) => {
-    const current = filters.expertise
-    const updated = current.includes(expertise) ? current.filter((e) => e !== expertise) : [...current, expertise]
-    updateFilter("expertise", updated)
-  }
-
-  const toggleLocation = (location: string) => {
-    const current = filters.location
-    const updated = current.includes(location) ? current.filter((l) => l !== location) : [...current, location]
-    updateFilter("location", updated)
-  }
-
-  const toggleAvailability = (availability: string) => {
-    const current = filters.availability
-    const updated = current.includes(availability)
-      ? current.filter((a) => a !== availability)
-      : [...current, availability]
-    updateFilter("availability", updated)
-  }
-
-  const getActiveFiltersCount = () => {
+  const getActiveFilterCount = () => {
     let count = 0
     if (filters.expertise.length > 0) count++
     if (filters.location.length > 0) count++
+    if (filters.languages.length > 0) count++
     if (filters.availability.length > 0) count++
-    if (filters.verified) count++
+    if (filters.experience[0] > 0 || filters.experience[1] < 30) count++
+    if (filters.hourlyRate[0] > 0 || filters.hourlyRate[1] < 10000) count++
     if (filters.rating > 0) count++
+    if (filters.verified) count++
     return count
   }
 
+  const activeFilterCount = getActiveFilterCount()
+
   return (
-    <Card className={className}>
-      <CardHeader className="pb-4">
+    <Card className={cn("h-fit", className)}>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Filter className="h-4 w-4" />
-            <CardTitle className="text-lg">Filters</CardTitle>
-            {getActiveFiltersCount() > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {getActiveFiltersCount()}
+            Filters
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {activeFilterCount}
               </Badge>
             )}
+          </CardTitle>
+          <div className="flex gap-1">
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">
+                Clear All
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)}>
+              <X className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-45")} />
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClearFilters} className="text-xs">
-            Clear All
-          </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        {/* Expertise Filter */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Expertise</Label>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {expertiseOptions.map((expertise) => (
-              <div key={expertise} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`expertise-${expertise}`}
-                  checked={filters.expertise.includes(expertise)}
-                  onCheckedChange={() => toggleExpertise(expertise)}
-                />
-                <Label htmlFor={`expertise-${expertise}`} className="text-sm cursor-pointer">
-                  {expertise}
-                </Label>
-              </div>
-            ))}
+      {!isCollapsed && (
+        <CardContent className="space-y-6">
+          {/* Expertise */}
+          <div>
+            <h3 className="font-medium mb-3">Expertise</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {availableOptions.expertise.map((expertise) => (
+                <div key={expertise} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`expertise-${expertise}`}
+                    checked={filters.expertise.includes(expertise)}
+                    onCheckedChange={(checked) => handleExpertiseChange(expertise, checked as boolean)}
+                  />
+                  <label
+                    htmlFor={`expertise-${expertise}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {expertise}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {/* Experience Range */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
-            Experience: {filters.experience[0]} - {filters.experience[1]} years
-          </Label>
-          <Slider
-            value={filters.experience}
-            onValueChange={(value) => updateFilter("experience", value as [number, number])}
-            max={30}
-            min={0}
-            step={1}
-            className="w-full"
-          />
-        </div>
-
-        <Separator />
-
-        {/* Hourly Rate Range */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
-            Hourly Rate: ₹{filters.hourlyRate[0]} - ₹{filters.hourlyRate[1]}
-          </Label>
-          <Slider
-            value={filters.hourlyRate}
-            onValueChange={(value) => updateFilter("hourlyRate", value as [number, number])}
-            max={10000}
-            min={500}
-            step={500}
-            className="w-full"
-          />
-        </div>
-
-        <Separator />
-
-        {/* Minimum Rating */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Minimum Rating: {filters.rating} stars</Label>
-          <Slider
-            value={[filters.rating]}
-            onValueChange={(value) => updateFilter("rating", value[0])}
-            max={5}
-            min={0}
-            step={0.5}
-            className="w-full"
-          />
-        </div>
-
-        <Separator />
-
-        {/* Location Filter */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Location</Label>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            {locationOptions.map((location) => (
-              <div key={location} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`location-${location}`}
-                  checked={filters.location.includes(location)}
-                  onCheckedChange={() => toggleLocation(location)}
-                />
-                <Label htmlFor={`location-${location}`} className="text-sm cursor-pointer">
-                  {location}
-                </Label>
-              </div>
-            ))}
+          {/* Experience Range */}
+          <div>
+            <h3 className="font-medium mb-3">
+              Experience: {filters.experience[0]} - {filters.experience[1]} years
+            </h3>
+            <Slider
+              value={filters.experience}
+              onValueChange={(value) => onFiltersChange({ ...filters, experience: value as [number, number] })}
+              max={30}
+              min={0}
+              step={1}
+              className="w-full"
+            />
           </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {/* Availability Filter */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Availability</Label>
-          <div className="space-y-2">
-            {availabilityOptions.map((availability) => (
-              <div key={availability} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`availability-${availability}`}
-                  checked={filters.availability.includes(availability)}
-                  onCheckedChange={() => toggleAvailability(availability)}
-                />
-                <Label htmlFor={`availability-${availability}`} className="text-sm cursor-pointer">
-                  {availability}
-                </Label>
-              </div>
-            ))}
+          {/* Hourly Rate Range */}
+          <div>
+            <h3 className="font-medium mb-3">
+              Hourly Rate: ₹{filters.hourlyRate[0]} - ₹{filters.hourlyRate[1]}
+            </h3>
+            <Slider
+              value={filters.hourlyRate}
+              onValueChange={(value) => onFiltersChange({ ...filters, hourlyRate: value as [number, number] })}
+              max={10000}
+              min={0}
+              step={500}
+              className="w-full"
+            />
           </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {/* Verified Only */}
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="verified"
-            checked={filters.verified}
-            onCheckedChange={(checked) => updateFilter("verified", checked)}
-          />
-          <Label htmlFor="verified" className="text-sm cursor-pointer">
-            Verified mentors only
-          </Label>
-        </div>
-      </CardContent>
+          {/* Location */}
+          <div>
+            <h3 className="font-medium mb-3">Location</h3>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {availableOptions.locations.map((location) => (
+                <div key={location} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`location-${location}`}
+                    checked={filters.location.includes(location)}
+                    onCheckedChange={(checked) => handleLocationChange(location, checked as boolean)}
+                  />
+                  <label
+                    htmlFor={`location-${location}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {location}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Languages */}
+          <div>
+            <h3 className="font-medium mb-3">Languages</h3>
+            <div className="space-y-2">
+              {availableOptions.languages.map((language) => (
+                <div key={language} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`language-${language}`}
+                    checked={filters.languages.includes(language)}
+                    onCheckedChange={(checked) => handleLanguageChange(language, checked as boolean)}
+                  />
+                  <label
+                    htmlFor={`language-${language}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {language}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Minimum Rating */}
+          <div>
+            <h3 className="font-medium mb-3">Minimum Rating: {filters.rating} stars</h3>
+            <Slider
+              value={[filters.rating]}
+              onValueChange={(value) => onFiltersChange({ ...filters, rating: value[0] })}
+              max={5}
+              min={0}
+              step={0.5}
+              className="w-full"
+            />
+          </div>
+
+          <Separator />
+
+          {/* Availability */}
+          <div>
+            <h3 className="font-medium mb-3">Availability</h3>
+            <div className="space-y-2">
+              {availableOptions.availability.map((availability) => (
+                <div key={availability} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`availability-${availability}`}
+                    checked={filters.availability.includes(availability)}
+                    onCheckedChange={(checked) => handleAvailabilityChange(availability, checked as boolean)}
+                  />
+                  <label
+                    htmlFor={`availability-${availability}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {availability}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Verified Only */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="verified"
+              checked={filters.verified}
+              onCheckedChange={(checked) => onFiltersChange({ ...filters, verified: checked as boolean })}
+            />
+            <label
+              htmlFor="verified"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Verified mentors only
+            </label>
+          </div>
+        </CardContent>
+      )}
     </Card>
   )
 }

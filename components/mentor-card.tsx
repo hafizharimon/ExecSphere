@@ -1,47 +1,56 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Star, MapPin, Clock, Users } from "lucide-react"
-import Link from "next/link"
+import { Star, MapPin, Clock, Video, MessageCircle, Verified } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-interface MentorCardProps {
-  mentor: {
-    id: string
-    name: string
-    title: string
-    company: string
-    avatar?: string
-    rating: number
-    reviewCount: number
-    hourlyRate: number
-    location: string
-    expertise: string[]
-    experience: number
-    totalMentees: number
-    responseTime: string
-    isVerified: boolean
-    isOnline: boolean
-  }
+export interface Mentor {
+  id: string
+  name: string
+  title: string
+  company: string
+  avatar: string
+  rating: number
+  reviewCount: number
+  hourlyRate: number
+  currency: string
+  location: string
+  expertise: string[]
+  experience: number
+  isOnline: boolean
+  isVerified: boolean
+  responseTime: string
+  languages: string[]
+  sessionCount: number
+  bio: string
 }
 
-export function MentorCard({ mentor }: MentorCardProps) {
-  const initials = mentor.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
+interface MentorCardProps {
+  mentor: Mentor
+  onViewProfile?: (mentorId: string) => void
+  onBookSession?: (mentorId: string) => void
+  onMessage?: (mentorId: string) => void
+  className?: string
+}
 
+export function MentorCard({ mentor, onViewProfile, onBookSession, onMessage, className }: MentorCardProps) {
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow duration-200">
-      <CardHeader className="pb-4">
-        <div className="flex items-start gap-4">
+    <Card className={cn("group hover:shadow-lg transition-all duration-200 cursor-pointer", className)}>
+      <CardContent className="p-6">
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-4">
           <div className="relative">
             <Avatar className="h-16 w-16">
               <AvatarImage src={mentor.avatar || "/placeholder.svg"} alt={mentor.name} />
-              <AvatarFallback className="text-lg font-semibold">{initials}</AvatarFallback>
+              <AvatarFallback className="text-lg">
+                {mentor.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
+              </AvatarFallback>
             </Avatar>
             {mentor.isOnline && (
               <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 border-2 border-white rounded-full" />
@@ -50,54 +59,50 @@ export function MentorCard({ mentor }: MentorCardProps) {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-lg truncate">{mentor.name}</h3>
-              {mentor.isVerified && (
-                <Badge variant="secondary" className="text-xs">
-                  Verified
-                </Badge>
-              )}
+              <h3 className="font-semibold text-lg truncate group-hover:text-blue-600 transition-colors">
+                {mentor.name}
+              </h3>
+              {mentor.isVerified && <Verified className="h-4 w-4 text-blue-500 flex-shrink-0" />}
             </div>
-            <p className="text-sm text-muted-foreground truncate">{mentor.title}</p>
-            <p className="text-sm text-muted-foreground truncate">{mentor.company}</p>
+
+            <p className="text-sm text-muted-foreground mb-1 truncate">{mentor.title}</p>
+
+            <p className="text-sm font-medium text-gray-700 truncate">{mentor.company}</p>
+          </div>
+
+          <div className="text-right">
+            <div className="text-lg font-bold text-green-600">
+              {mentor.currency}
+              {mentor.hourlyRate}
+            </div>
+            <div className="text-xs text-muted-foreground">per hour</div>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Rating and Reviews */}
-        <div className="flex items-center gap-2">
+        {/* Rating and Stats */}
+        <div className="flex items-center gap-4 mb-4 text-sm">
           <div className="flex items-center gap-1">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-medium">{mentor.rating.toFixed(1)}</span>
+            <span className="font-medium">{mentor.rating}</span>
+            <span className="text-muted-foreground">({mentor.reviewCount})</span>
           </div>
-          <span className="text-sm text-muted-foreground">({mentor.reviewCount} reviews)</span>
-        </div>
 
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="truncate">{mentor.location}</span>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span>{mentor.location}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="h-3 w-3" />
             <span>{mentor.responseTime}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span>{mentor.totalMentees} mentees</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium">₹{mentor.hourlyRate}/hr</span>
           </div>
         </div>
 
         {/* Expertise Tags */}
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Expertise:</p>
+        <div className="mb-4">
           <div className="flex flex-wrap gap-1">
             {mentor.expertise.slice(0, 3).map((skill, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
+              <Badge key={index} variant="secondary" className="text-xs">
                 {skill}
               </Badge>
             ))}
@@ -109,13 +114,37 @@ export function MentorCard({ mentor }: MentorCardProps) {
           </div>
         </div>
 
+        {/* Bio */}
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{mentor.bio}</p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-4 mb-4 text-center">
+          <div>
+            <div className="text-lg font-semibold">{mentor.experience}</div>
+            <div className="text-xs text-muted-foreground">Years Exp.</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold">{mentor.sessionCount}</div>
+            <div className="text-xs text-muted-foreground">Sessions</div>
+          </div>
+        </div>
+
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          <Button asChild className="flex-1">
-            <Link href={`/mentor-board/${mentor.id}`}>View Profile</Link>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 bg-transparent"
+            onClick={() => onViewProfile?.(mentor.id)}
+          >
+            View Profile
           </Button>
-          <Button asChild variant="outline" className="flex-1 bg-transparent">
-            <Link href={`/mentor-board/${mentor.id}/request`}>Book Session</Link>
+          <Button size="sm" className="flex-1" onClick={() => onBookSession?.(mentor.id)}>
+            <Video className="h-3 w-3 mr-1" />
+            Book Session
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onMessage?.(mentor.id)}>
+            <MessageCircle className="h-3 w-3" />
           </Button>
         </div>
       </CardContent>
