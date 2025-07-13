@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { mcaApiService } from "@/services/mca-api-service"
 import { udyamApiService } from "@/services/udyam-api-service"
+import { vercelAnalytics } from "@/services/vercel-analytics-service"
 
 // Mobile-first responsive registration form for Indian C-level executives
 export default function RegisterPage() {
@@ -101,9 +102,21 @@ export default function RegisterPage() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
+  // Track page load
+  useEffect(() => {
+    vercelAnalytics.trackPageView("registration", "auth")
+    vercelAnalytics.trackConversion("registration")
+  }, [])
+
   const handleLinkedInConnect = async () => {
     setIsLoading(true)
     try {
+      // Track LinkedIn connection attempt
+      vercelAnalytics.trackEvent("linkedin_connect_attempt", {
+        step: currentStep,
+        user_type: "new_registration",
+      })
+
       // Simulate LinkedIn OAuth flow
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
@@ -150,11 +163,18 @@ export default function RegisterPage() {
 
       setVerificationStatus((prev) => ({ ...prev, linkedin: true }))
 
+      // Track successful LinkedIn connection
+      vercelAnalytics.trackEvent("linkedin_connect_success", {
+        profile_data_imported: true,
+        experience_count: linkedinData.experience.length,
+      })
+
       toast({
         title: "LinkedIn Connected",
         description: "Profile data imported successfully",
       })
     } catch (error) {
+      vercelAnalytics.trackError("linkedin_connection_failed", error?.toString() || "Unknown error")
       toast({
         title: "LinkedIn Connection Failed",
         description: "Please try again",
@@ -177,17 +197,28 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     try {
+      vercelAnalytics.trackEvent("mca_verification_attempt", {
+        cin_number: formData.cinNumber,
+        company_name: formData.legalEntityName,
+      })
+
       const result = await mcaApiService.verifyCompany(formData.cinNumber, formData.legalEntityName, formData.name)
 
       if (result.success && result.data) {
         setMcaData(result.data)
         setVerificationStatus((prev) => ({ ...prev, mca: true }))
 
+        vercelAnalytics.trackEvent("mca_verification_success", {
+          company_status: result.data.companyStatus,
+          director_verified: result.userIsDirector,
+        })
+
         toast({
           title: "MCA Verification Successful",
           description: `Company verified. ${result.userIsDirector ? "You are verified as a director." : ""}`,
         })
       } else {
+        vercelAnalytics.trackError("mca_verification_failed", result.error || "Unknown error")
         toast({
           title: "MCA Verification Failed",
           description: result.error || "Unable to verify company details",
@@ -195,6 +226,7 @@ export default function RegisterPage() {
         })
       }
     } catch (error) {
+      vercelAnalytics.trackError("mca_verification_error", error?.toString() || "Service error")
       toast({
         title: "MCA Verification Error",
         description: "Service temporarily unavailable",
@@ -217,17 +249,27 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     try {
+      vercelAnalytics.trackEvent("udyam_verification_attempt", {
+        udyam_number: formData.udyamNumber,
+      })
+
       const result = await udyamApiService.verifyUdyam(formData.udyamNumber)
 
       if (result.success && result.data) {
         setUdyamData(result.data)
         setVerificationStatus((prev) => ({ ...prev, udyam: true }))
 
+        vercelAnalytics.trackEvent("udyam_verification_success", {
+          enterprise_type: result.data.enterpriseType,
+          msme_category: result.badges.join(","),
+        })
+
         toast({
           title: "Udyam Verification Successful",
           description: "MSME registration verified successfully",
         })
       } else {
+        vercelAnalytics.trackError("udyam_verification_failed", result.error || "Unknown error")
         toast({
           title: "Udyam Verification Failed",
           description: result.error || "Unable to verify Udyam registration",
@@ -235,6 +277,7 @@ export default function RegisterPage() {
         })
       }
     } catch (error) {
+      vercelAnalytics.trackError("udyam_verification_error", error?.toString() || "Service error")
       toast({
         title: "Udyam Verification Error",
         description: "Service temporarily unavailable",
@@ -250,14 +293,21 @@ export default function RegisterPage() {
     try {
       const target = type === "email" ? formData.companyEmail : type === "sms" ? formData.phone : formData.aadhaarNumber
 
+      vercelAnalytics.trackEvent("otp_send_attempt", {
+        otp_type: type,
+        target_masked: target.slice(0, 3) + "***" + target.slice(-3),
+      })
+
       const success = await sendOTP(target, type)
       if (success) {
+        vercelAnalytics.trackEvent("otp_send_success", { otp_type: type })
         toast({
           title: `${type.toUpperCase()} OTP Sent`,
           description: `Verification code sent to your ${type}`,
         })
       }
     } catch (error) {
+      vercelAnalytics.trackError("otp_send_failed", error?.toString() || "Unknown error", type)
       toast({
         title: "Error",
         description: "Failed to send OTP",
@@ -274,11 +324,18 @@ export default function RegisterPage() {
     // Simple OTP validation (6 digits)
     if (otpValue.length === 6 && /^\d{6}$/.test(otpValue)) {
       setVerificationStatus((prev) => ({ ...prev, [type]: true }))
+
+      vercelAnalytics.trackEvent("otp_verification_success", {
+        otp_type: type,
+        verification_method: "platform",
+      })
+
       toast({
         title: `${type.toUpperCase()} Verified`,
         description: "Verification successful",
       })
     } else {
+      vercelAnalytics.trackError("otp_verification_failed", "Invalid OTP format", type)
       toast({
         title: "Invalid OTP",
         description: "Please enter a valid 6-digit OTP",
@@ -296,16 +353,27 @@ export default function RegisterPage() {
   const handlePayment = async () => {
     setIsLoading(true)
     try {
+      vercelAnalytics.trackEvent("payment_attempt", {
+        amount: 1000,
+        currency: "INR",
+        payment_type: "registration_fee",
+      })
+
       // Simulate payment processing
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       setVerificationStatus((prev) => ({ ...prev, payment: true }))
+
+      vercelAnalytics.trackRevenue("premium", 1000, "INR")
+      vercelAnalytics.trackConversion("registration", 1000)
+
       toast({
         title: "Payment Successful",
         description: "Registration fee of ₹1,000 paid successfully",
       })
       setCurrentStep(8)
     } catch (error) {
+      vercelAnalytics.trackError("payment_failed", error?.toString() || "Payment error")
       toast({
         title: "Payment Failed",
         description: "Please try again",
@@ -336,6 +404,15 @@ export default function RegisterPage() {
       })
 
       if (result.success) {
+        vercelAnalytics.trackConversion("registration")
+        vercelAnalytics.trackEvent("registration_complete", {
+          user_role: formData.title,
+          company_category: formData.companyCategory,
+          verification_types: Object.keys(verificationStatus).filter(
+            (key) => verificationStatus[key as keyof typeof verificationStatus],
+          ),
+        })
+
         toast({
           title: "Registration Submitted",
           description: "Your application is under review by Super Admin",
@@ -343,6 +420,7 @@ export default function RegisterPage() {
         router.push("/auth/registration-pending")
       }
     } catch (error) {
+      vercelAnalytics.trackError("registration_failed", error?.toString() || "Registration error")
       toast({
         title: "Registration Failed",
         description: "Please try again",
@@ -399,6 +477,27 @@ export default function RegisterPage() {
       default:
         return "Registration"
     }
+  }
+
+  const handleNext = () => {
+    if (canProceedToNext()) {
+      const nextStep = currentStep + 1
+      setCurrentStep(nextStep)
+      vercelAnalytics.trackEvent("registration_step_complete", {
+        step: currentStep,
+        next_step: nextStep,
+        step_name: getStepTitle(),
+      })
+    }
+  }
+
+  const handlePrevious = () => {
+    const prevStep = currentStep - 1
+    setCurrentStep(prevStep)
+    vercelAnalytics.trackNavigation({
+      fromPage: `registration_step_${currentStep}`,
+      toPage: `registration_step_${prevStep}`,
+    })
   }
 
   // Mobile-optimized layout
@@ -877,7 +976,7 @@ export default function RegisterPage() {
                 <div className="space-y-6">
                   <div className="text-center">
                     <Globe className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold">Welcome to CXO Network</h3>
+                    <h3 className="text-lg font-semibold">Welcome to ExecSphere</h3>
                     <p className="text-sm text-gray-600">You're joining India's premier executive network</p>
                   </div>
 
@@ -997,7 +1096,7 @@ export default function RegisterPage() {
           {/* Mobile Navigation */}
           <div className="flex justify-between items-center">
             {currentStep > 1 && (
-              <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)} className="rounded-full">
+              <Button variant="outline" onClick={handlePrevious} className="rounded-full bg-transparent">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
@@ -1007,7 +1106,7 @@ export default function RegisterPage() {
 
             {currentStep < 8 ? (
               <Button
-                onClick={() => setCurrentStep(currentStep + 1)}
+                onClick={handleNext}
                 disabled={!canProceedToNext()}
                 className="bg-blue-500 hover:bg-blue-600 text-white rounded-full"
               >
@@ -1029,7 +1128,7 @@ export default function RegisterPage() {
     )
   }
 
-  // Desktop layout (existing code continues...)
+  // Desktop layout
   return (
     <div className="min-h-screen bg-white">
       <div className="p-4">
@@ -1041,7 +1140,7 @@ export default function RegisterPage() {
 
       <div className="container max-w-2xl mx-auto px-6 pb-16">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Join CXO Network</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Join ExecSphere</h1>
           <p className="text-slate-500 mt-2">India's Premier Executive Platform</p>
         </div>
 
@@ -1068,17 +1167,23 @@ export default function RegisterPage() {
           <p className="text-sm text-slate-500">Step {currentStep} of 8</p>
         </div>
 
-        {/* Desktop content would continue with the same step content as mobile but with different styling */}
-        {/* ... rest of desktop implementation ... */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-slate-800">{getStepTitle()}</h2>
+          <p className="text-sm text-slate-500">Step {currentStep} of 8</p>
+        </div>
+
+        {/* Desktop content would be similar to mobile but with different styling */}
+        <Card>
+          <CardContent className="pt-6">
+            {/* Same step content as mobile but with desktop styling */}
+            {/* ... (implement all steps similar to mobile version) ... */}
+          </CardContent>
+        </Card>
 
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-8 pt-6 border-t border-slate-200">
           {currentStep > 1 && (
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep(currentStep - 1)}
-              className="rounded-full border-slate-200"
-            >
+            <Button variant="outline" onClick={handlePrevious} className="rounded-full border-slate-200 bg-transparent">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
@@ -1087,7 +1192,7 @@ export default function RegisterPage() {
           <div className="ml-auto">
             {currentStep < 8 ? (
               <Button
-                onClick={() => setCurrentStep(currentStep + 1)}
+                onClick={handleNext}
                 disabled={!canProceedToNext()}
                 className="bg-blue-500 hover:bg-blue-600 text-white rounded-full"
               >

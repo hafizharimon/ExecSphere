@@ -1,83 +1,20 @@
 "use client"
 
-// Custom React hook for analytics tracking
+// Custom hook for analytics tracking
 
-import { useEffect, useCallback } from "react"
-import { useAuth } from "@/context/auth-context"
+import { useCallback } from "react"
 import { vercelAnalytics } from "@/services/vercel-analytics-service"
-import { usePathname } from "next/navigation"
 
 export function useAnalytics() {
-  const { user } = useAuth()
-  const pathname = usePathname()
-
-  // Initialize analytics with user context
-  useEffect(() => {
-    if (user) {
-      vercelAnalytics.initialize({
-        userId: user.id,
-        userRole: user.role,
-        userCompany: user.company,
-        isVerified: user.isVerified,
-      })
-    }
-  }, [user])
-
-  // Track page views
-  useEffect(() => {
-    const startTime = Date.now()
-
-    vercelAnalytics.trackPageView(pathname)
-
-    // Track page load performance
-    const handleLoad = () => {
-      const loadTime = Date.now() - startTime
-      vercelAnalytics.trackPerformance({
-        pageType: pathname,
-        loadTime,
-      })
-    }
-
-    if (document.readyState === "complete") {
-      handleLoad()
-    } else {
-      window.addEventListener("load", handleLoad)
-      return () => window.removeEventListener("load", handleLoad)
-    }
-  }, [pathname])
-
-  // Track navigation
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      vercelAnalytics.endSession()
-    }
-
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  const trackProfileView = useCallback((profileId: string, viewerRole?: string) => {
+    vercelAnalytics.trackProfileView({ profileId, viewerRole })
   }, [])
-
-  // Tracking functions
-  const trackProfileView = useCallback(
-    (profileId: string) => {
-      vercelAnalytics.trackProfileView({
-        profileId,
-        viewerRole: user?.role,
-        viewerCompany: user?.company,
-      })
-    },
-    [user],
-  )
 
   const trackWallActivity = useCallback(
     (activityType: "like" | "comment" | "share" | "post_create", postId?: string, postType?: string) => {
-      vercelAnalytics.trackWallActivity({
-        activityType,
-        postId,
-        postType,
-        userRole: user?.role,
-      })
+      vercelAnalytics.trackWallActivity({ activityType, postId, postType })
     },
-    [user],
+    [],
   )
 
   const trackEventParticipation = useCallback(
@@ -86,10 +23,9 @@ export function useAnalytics() {
         eventId,
         eventType,
         participationType,
-        userRole: user?.role,
       })
     },
-    [user],
+    [],
   )
 
   const trackMentorshipRequest = useCallback(
@@ -133,6 +69,5 @@ export function useAnalytics() {
     trackSearch,
     trackConversion,
     trackError,
-    vercelAnalytics,
   }
 }

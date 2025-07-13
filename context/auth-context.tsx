@@ -1,239 +1,312 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import type React from "react"
+import { createContext, useContext, useState, useEffect } from "react"
+import { vercelAnalytics } from "@/services/vercel-analytics-service"
 
-export interface User {
+interface User {
   id: string
   name: string
   email: string
-  role: string
-  organization: string
-  industry: string
+  role: "super_admin" | "admin" | "cxo" | "mentor" | "pending"
+  avatar?: string
+  company?: string
+  title?: string
   isVerified: boolean
-  mcaVerified?: boolean
-  directorVerified?: boolean
-  userType: "super-admin" | "admin" | "cxo" | "mentor" | "pending"
-  profilePicture?: string
-  linkedinProfile?: string
-  companyLinkedInPage?: string
-  legalEntityName?: string
-  cinNumber?: string
-  registrationDate?: string
-  lastLogin?: string
-  privileges?: string[]
-  premiumStatus?: "free" | "premium"
-  autoGrade?: string
+  badges: string[]
+  registrationStatus: "pending" | "approved" | "rejected"
 }
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, otp: string) => Promise<boolean>
-  logout: () => void
-  register: (data: any) => Promise<{ success: boolean; paymentUrl?: string }>
+  login: (email: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string }>
+  loginWithOTP: (email: string, otp: string) => Promise<{ success: boolean; user?: User; error?: string }>
+  loginWithLinkedIn: () => Promise<{ success: boolean; user?: User; error?: string }>
+  register: (data: any) => Promise<{ success: boolean; paymentUrl?: string; error?: string }>
   sendOTP: (target: string, type: "email" | "sms" | "aadhaar") => Promise<boolean>
-  verifyPayment: (paymentId: string) => Promise<boolean>
+  verifyPayment: (paymentId: string) => Promise<{ success: boolean; error?: string }>
+  logout: () => void
   isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Mock user data for different user types
-const mockUsers: Record<string, User> = {
-  "test@demo.com": {
-    id: "super-admin-1",
-    name: "Super Admin",
-    email: "test@demo.com",
-    role: "Super Admin",
-    organization: "ExecSphere Platform",
-    industry: "Technology",
-    isVerified: true,
-    mcaVerified: true,
-    directorVerified: true,
-    userType: "super-admin",
-    registrationDate: "2024-01-01",
-    lastLogin: new Date().toISOString(),
-    privileges: ["all"],
-    premiumStatus: "premium",
-    autoGrade: "A+",
-  },
-  "admin@demo.com": {
+// Demo users for different roles
+const demoUsers: Record<string, User> = {
+  "admin@execsphere.com": {
     id: "admin-1",
-    name: "Platform Admin",
-    email: "admin@demo.com",
-    role: "Administrator",
-    organization: "ExecSphere Platform",
-    industry: "Technology",
+    name: "Admin User",
+    email: "admin@execsphere.com",
+    role: "admin",
+    avatar: "/placeholder-user.jpg",
+    company: "ExecSphere",
+    title: "Platform Administrator",
     isVerified: true,
-    mcaVerified: true,
-    directorVerified: true,
-    userType: "admin",
-    registrationDate: "2024-01-01",
-    lastLogin: new Date().toISOString(),
-    privileges: ["moderation", "user-management"],
-    premiumStatus: "premium",
-    autoGrade: "A+",
+    badges: ["Admin", "Verified"],
+    registrationStatus: "approved",
   },
-  "cxo@demo.com": {
-    id: "cxo-1",
+  "superadmin@execsphere.com": {
+    id: "superadmin-1",
+    name: "Super Admin",
+    email: "superadmin@execsphere.com",
+    role: "super_admin",
+    avatar: "/placeholder-user.jpg",
+    company: "ExecSphere",
+    title: "Super Administrator",
+    isVerified: true,
+    badges: ["Super Admin", "Verified", "Founder"],
+    registrationStatus: "approved",
+  },
+  "ceo@techcorp.com": {
+    id: "ceo-1",
     name: "Rajesh Kumar",
-    email: "cxo@demo.com",
-    role: "CEO",
-    organization: "TechCorp Solutions",
-    industry: "Technology",
+    email: "ceo@techcorp.com",
+    role: "cxo",
+    avatar: "/placeholder-user.jpg",
+    company: "TechCorp Solutions",
+    title: "Chief Executive Officer",
     isVerified: true,
-    mcaVerified: true,
-    directorVerified: true,
-    userType: "cxo",
-    linkedinProfile: "https://linkedin.com/in/rajesh-kumar",
-    companyLinkedInPage: "https://linkedin.com/company/techcorp-solutions",
-    legalEntityName: "TechCorp Solutions Private Limited",
-    cinNumber: "U72900KA2020PTC134567",
-    registrationDate: "2024-01-15",
-    lastLogin: new Date().toISOString(),
-    privileges: ["networking", "mentorship", "events", "analytics"],
-    premiumStatus: "premium",
-    autoGrade: "A+",
+    badges: ["CEO", "MCA Verified", "LinkedIn Verified"],
+    registrationStatus: "approved",
   },
-  "mentor@demo.com": {
+  "mentor@consulting.com": {
     id: "mentor-1",
-    name: "Sarah Chen",
-    email: "mentor@demo.com",
-    role: "CTO",
-    organization: "InnovateTech",
-    industry: "Technology",
+    name: "Dr. Priya Sharma",
+    email: "mentor@consulting.com",
+    role: "mentor",
+    avatar: "/placeholder-user.jpg",
+    company: "Strategic Consulting",
+    title: "Senior Business Consultant",
     isVerified: true,
-    mcaVerified: true,
-    directorVerified: true,
-    userType: "mentor",
-    linkedinProfile: "https://linkedin.com/in/sarah-chen",
-    companyLinkedInPage: "https://linkedin.com/company/innovatetech",
-    legalEntityName: "InnovateTech Solutions Private Limited",
-    cinNumber: "U72900MH2019PTC234567",
-    registrationDate: "2024-01-10",
-    lastLogin: new Date().toISOString(),
-    privileges: ["networking", "mentorship", "events"],
-    premiumStatus: "premium",
-    autoGrade: "A",
+    badges: ["Mentor", "Expert", "Top Rated"],
+    registrationStatus: "approved",
   },
-  "pending@demo.com": {
+  "pending@newcompany.com": {
     id: "pending-1",
-    name: "David Wilson",
-    email: "pending@demo.com",
-    role: "CMO",
-    organization: "Marketing Pro",
-    industry: "Marketing",
+    name: "Amit Patel",
+    email: "pending@newcompany.com",
+    role: "pending",
+    avatar: "/placeholder-user.jpg",
+    company: "New Startup Inc",
+    title: "Founder & CEO",
     isVerified: false,
-    mcaVerified: false,
-    directorVerified: false,
-    userType: "pending",
-    linkedinProfile: "https://linkedin.com/in/david-wilson",
-    registrationDate: "2024-01-20",
-    privileges: [],
-    premiumStatus: "free",
+    badges: [],
+    registrationStatus: "pending",
   },
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem("execsphere-user")
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error("Error parsing stored user:", error)
-        localStorage.removeItem("execsphere-user")
-      }
+    // Check for existing session
+    const savedUser = localStorage.getItem("execsphere_user")
+    if (savedUser) {
+      const userData = JSON.parse(savedUser)
+      setUser(userData)
+
+      // Initialize analytics with user context
+      vercelAnalytics.initialize({
+        userId: userData.id,
+        userRole: userData.role,
+        userCompany: userData.company,
+        isVerified: userData.isVerified,
+      })
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, otp: string): Promise<boolean> => {
+  const login = async (email: string, password?: string) => {
+    setIsLoading(true)
     try {
-      // Simulate API call delay
+      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // Validate OTP format (demo: AZ47E5)
-      const otpPattern = /^[A-Z]{2}[0-9]{2}[A-Z][0-9]$/
-      if (!otpPattern.test(otp)) {
-        return false
-      }
+      const userData = demoUsers[email.toLowerCase()]
+      if (userData) {
+        setUser(userData)
+        localStorage.setItem("execsphere_user", JSON.stringify(userData))
 
-      // Check if user exists in mock data
-      const userData = mockUsers[email.toLowerCase()]
-      if (!userData) {
-        return false
-      }
+        // Track login
+        vercelAnalytics.initialize({
+          userId: userData.id,
+          userRole: userData.role,
+          userCompany: userData.company,
+          isVerified: userData.isVerified,
+        })
 
-      // Update last login
-      const updatedUser = {
-        ...userData,
-        lastLogin: new Date().toISOString(),
-      }
+        vercelAnalytics.trackEvent("login_success", {
+          login_method: "email_password",
+          user_role: userData.role,
+          user_verified: userData.isVerified,
+        })
 
-      setUser(updatedUser)
-      localStorage.setItem("execsphere-user", JSON.stringify(updatedUser))
-      return true
+        return { success: true, user: userData }
+      } else {
+        vercelAnalytics.trackError("login_failed", "Invalid credentials", "email_password")
+        return { success: false, error: "Invalid credentials" }
+      }
     } catch (error) {
-      console.error("Login error:", error)
-      return false
+      vercelAnalytics.trackError("login_error", error?.toString() || "Unknown error", "email_password")
+      return { success: false, error: "Login failed" }
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("execsphere-user")
+  const loginWithOTP = async (email: string, otp: string) => {
+    setIsLoading(true)
+    try {
+      // Simulate OTP verification
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Accept any 6-digit OTP for demo
+      if (otp.length === 6 && /^\d{6}$/.test(otp)) {
+        const userData = demoUsers[email.toLowerCase()]
+        if (userData) {
+          setUser(userData)
+          localStorage.setItem("execsphere_user", JSON.stringify(userData))
+
+          vercelAnalytics.initialize({
+            userId: userData.id,
+            userRole: userData.role,
+            userCompany: userData.company,
+            isVerified: userData.isVerified,
+          })
+
+          vercelAnalytics.trackEvent("login_success", {
+            login_method: "otp",
+            user_role: userData.role,
+          })
+
+          return { success: true, user: userData }
+        }
+      }
+
+      vercelAnalytics.trackError("otp_login_failed", "Invalid OTP", "otp_verification")
+      return { success: false, error: "Invalid OTP" }
+    } catch (error) {
+      vercelAnalytics.trackError("otp_login_error", error?.toString() || "Unknown error")
+      return { success: false, error: "OTP verification failed" }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const register = async (data: any): Promise<{ success: boolean; paymentUrl?: string }> => {
+  const loginWithLinkedIn = async () => {
+    setIsLoading(true)
+    try {
+      // Simulate LinkedIn OAuth
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // Return demo CEO user for LinkedIn login
+      const userData = demoUsers["ceo@techcorp.com"]
+      setUser(userData)
+      localStorage.setItem("execsphere_user", JSON.stringify(userData))
+
+      vercelAnalytics.initialize({
+        userId: userData.id,
+        userRole: userData.role,
+        userCompany: userData.company,
+        isVerified: userData.isVerified,
+      })
+
+      vercelAnalytics.trackEvent("login_success", {
+        login_method: "linkedin",
+        user_role: userData.role,
+      })
+
+      return { success: true, user: userData }
+    } catch (error) {
+      vercelAnalytics.trackError("linkedin_login_error", error?.toString() || "Unknown error")
+      return { success: false, error: "LinkedIn login failed" }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const register = async (data: any) => {
+    setIsLoading(true)
     try {
       // Simulate registration process
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      // Mock successful registration
+      vercelAnalytics.trackConversion("registration")
+      vercelAnalytics.trackEvent("registration_submitted", {
+        company_category: data.companyCategory,
+        verification_types: Object.keys(data.verificationStatus || {}).filter((key) => data.verificationStatus[key]),
+      })
+
       return {
         success: true,
-        paymentUrl: "https://payment.demo.com/pay/12345",
+        paymentUrl: "/payment/registration-fee",
       }
     } catch (error) {
-      console.error("Registration error:", error)
-      return { success: false }
+      vercelAnalytics.trackError("registration_error", error?.toString() || "Unknown error")
+      return { success: false, error: "Registration failed" }
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const sendOTP = async (target: string, type: "email" | "sms" | "aadhaar"): Promise<boolean> => {
+  const sendOTP = async (target: string, type: "email" | "sms" | "aadhaar") => {
     try {
       // Simulate OTP sending
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      console.log(`Sending ${type} OTP to ${target}`)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      vercelAnalytics.trackEvent("otp_sent", {
+        otp_type: type,
+        target_type: type,
+      })
+
       return true
     } catch (error) {
-      console.error("Send OTP error:", error)
+      vercelAnalytics.trackError("otp_send_failed", error?.toString() || "Unknown error", type)
       return false
     }
   }
 
-  const verifyPayment = async (paymentId: string): Promise<boolean> => {
+  const verifyPayment = async (paymentId: string) => {
     try {
       // Simulate payment verification
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      return true
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      vercelAnalytics.trackRevenue("premium", 1000, "INR")
+      vercelAnalytics.trackEvent("payment_verified", {
+        payment_id: paymentId,
+        amount: 1000,
+        currency: "INR",
+      })
+
+      return { success: true }
     } catch (error) {
-      console.error("Payment verification error:", error)
-      return false
+      vercelAnalytics.trackError("payment_verification_failed", error?.toString() || "Unknown error")
+      return { success: false, error: "Payment verification failed" }
     }
   }
 
-  const value: AuthContextType = {
+  const logout = () => {
+    vercelAnalytics.trackEvent("logout", {
+      user_role: user?.role,
+      session_duration: Date.now() - (Date.now() - 3600000), // Mock session duration
+    })
+
+    vercelAnalytics.endSession()
+
+    setUser(null)
+    localStorage.removeItem("execsphere_user")
+  }
+
+  const value = {
     user,
     login,
-    logout,
+    loginWithOTP,
+    loginWithLinkedIn,
     register,
     sendOTP,
     verifyPayment,
+    logout,
     isLoading,
   }
 
