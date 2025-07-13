@@ -1,6 +1,4 @@
 "use client"
-
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -55,8 +53,6 @@ const locationOptions = [
 const availabilityOptions = ["Immediate", "Within 24 hours", "Within 3 days", "Within a week", "Flexible"]
 
 export function FilterSidebar({ filters, onFiltersChange, onClearFilters, className = "" }: FilterSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
-
   const updateFilter = (key: keyof FilterOptions, value: any) => {
     onFiltersChange({
       ...filters,
