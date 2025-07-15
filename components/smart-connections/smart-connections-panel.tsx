@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/context/auth-context"
-import { smartConnectionsService, type SmartConnection } from "@/services/smart-connections-service"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,10 +12,79 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Sparkles, RefreshCw, MessageCircle, UserPlus, Building2, MapPin, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+interface SmartConnection {
+  id: string
+  recommendedUserId: string
+  connectionScore: number
+  status: "pending" | "connected" | "declined"
+  matchingFactors: string[]
+  recommendedUser: {
+    id: string
+    name: string
+    role: string
+    organization: string
+    industry: string
+    location: string
+    avatar?: string
+  }
+}
+
 interface SmartConnectionsPanelProps {
   onStartChat?: (userId: string) => void
   className?: string
 }
+
+// Mock data for smart connections
+const mockConnections: SmartConnection[] = [
+  {
+    id: "1",
+    recommendedUserId: "user1",
+    connectionScore: 0.85,
+    status: "pending",
+    matchingFactors: ["Technology", "Leadership", "Startup Experience"],
+    recommendedUser: {
+      id: "user1",
+      name: "Rajesh Kumar",
+      role: "Chief Technology Officer",
+      organization: "TechCorp India",
+      industry: "Technology",
+      location: "Mumbai",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+  },
+  {
+    id: "2",
+    recommendedUserId: "user2",
+    connectionScore: 0.78,
+    status: "pending",
+    matchingFactors: ["Marketing", "E-commerce", "Digital Strategy"],
+    recommendedUser: {
+      id: "user2",
+      name: "Priya Sharma",
+      role: "Chief Marketing Officer",
+      organization: "E-commerce Solutions",
+      industry: "E-commerce",
+      location: "Bangalore",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+  },
+  {
+    id: "3",
+    recommendedUserId: "user3",
+    connectionScore: 0.72,
+    status: "connected",
+    matchingFactors: ["Finance", "Investment", "Strategic Planning"],
+    recommendedUser: {
+      id: "user3",
+      name: "Amit Patel",
+      role: "Chief Financial Officer",
+      organization: "FinanceFirst Ltd",
+      industry: "Finance",
+      location: "Delhi",
+      avatar: "/placeholder.svg?height=40&width=40",
+    },
+  },
+]
 
 export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectionsPanelProps) {
   const { user } = useAuth()
@@ -44,14 +112,13 @@ export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectio
 
     try {
       setIsLoading(true)
-      const result = await smartConnectionsService.getSmartConnections(user.id)
-
-      if (result.success && result.data) {
-        setConnections(result.data)
-      }
+      // Simulate API call
+      setTimeout(() => {
+        setConnections(mockConnections)
+        setIsLoading(false)
+      }, 1000)
     } catch (error) {
       console.error("Failed to load connections:", error)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -61,11 +128,13 @@ export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectio
 
     try {
       setIsRefreshing(true)
-      await smartConnectionsService.refreshRecommendations(user.id)
-      await loadConnections()
+      // Simulate refresh
+      setTimeout(() => {
+        setConnections([...mockConnections])
+        setIsRefreshing(false)
+      }, 1500)
     } catch (error) {
       console.error("Failed to refresh recommendations:", error)
-    } finally {
       setIsRefreshing(false)
     }
   }
@@ -101,21 +170,10 @@ export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectio
 
   const handleConnect = async (connection: SmartConnection) => {
     try {
-      const result = await smartConnectionsService.connectWithUser(
-        user!.id,
-        connection.recommendedUserId,
-        `Hi ${connection.recommendedUser.name}, I'd like to connect with you based on our shared interests and background.`,
+      // Update connection status locally
+      setConnections((prev) =>
+        prev.map((conn) => (conn.id === connection.id ? { ...conn, status: "connected" as const } : conn)),
       )
-
-      if (result.success) {
-        // Update connection status locally
-        setConnections((prev) =>
-          prev.map((conn) => (conn.id === connection.id ? { ...conn, status: "connected" } : conn)),
-        )
-
-        // Track interaction
-        await smartConnectionsService.trackInteraction(user!.id, connection.recommendedUserId, "connection_request")
-      }
     } catch (error) {
       console.error("Failed to connect:", error)
     }
@@ -123,9 +181,6 @@ export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectio
 
   const handleStartChat = (connection: SmartConnection) => {
     onStartChat?.(connection.recommendedUserId)
-
-    // Track interaction
-    smartConnectionsService.trackInteraction(user!.id, connection.recommendedUserId, "chat_initiated")
   }
 
   const getScoreColor = (score: number) => {
