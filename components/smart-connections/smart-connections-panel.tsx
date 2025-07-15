@@ -1,236 +1,208 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/context/auth-context"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Sparkles, RefreshCw, MessageCircle, UserPlus, Building2, MapPin, Star } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Users, Search, UserPlus, MapPin, Building, Star } from "lucide-react"
 
-interface SmartConnection {
+interface Connection {
   id: string
-  recommendedUserId: string
-  connectionScore: number
-  status: "pending" | "connected" | "declined"
-  matchingFactors: string[]
-  recommendedUser: {
-    id: string
-    name: string
-    role: string
-    organization: string
-    industry: string
-    location: string
-    avatar?: string
-  }
+  name: string
+  title: string
+  company: string
+  industry: string
+  location: string
+  matchScore: number
+  mutualConnections: number
+  avatar?: string
+  verified: boolean
+  premium: boolean
 }
 
 interface SmartConnectionsPanelProps {
-  onStartChat?: (userId: string) => void
   className?: string
 }
 
-// Mock data for smart connections
-const mockConnections: SmartConnection[] = [
-  {
-    id: "1",
-    recommendedUserId: "user1",
-    connectionScore: 0.85,
-    status: "pending",
-    matchingFactors: ["Technology", "Leadership", "Startup Experience"],
-    recommendedUser: {
-      id: "user1",
+export function SmartConnectionsPanel({ className }: SmartConnectionsPanelProps) {
+  const [connections, setConnections] = useState<Connection[]>([])
+  const [filteredConnections, setFilteredConnections] = useState<Connection[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [industryFilter, setIndustryFilter] = useState("all")
+  const [locationFilter, setLocationFilter] = useState("all")
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Mock data for smart connections
+  const mockConnections: Connection[] = [
+    {
+      id: "1",
       name: "Rajesh Kumar",
-      role: "Chief Technology Officer",
-      organization: "TechCorp India",
+      title: "CEO",
+      company: "TechCorp Solutions",
       industry: "Technology",
       location: "Mumbai",
-      avatar: "/placeholder.svg?height=40&width=40",
+      matchScore: 95,
+      mutualConnections: 12,
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      premium: true,
     },
-  },
-  {
-    id: "2",
-    recommendedUserId: "user2",
-    connectionScore: 0.78,
-    status: "pending",
-    matchingFactors: ["Marketing", "E-commerce", "Digital Strategy"],
-    recommendedUser: {
-      id: "user2",
+    {
+      id: "2",
       name: "Priya Sharma",
-      role: "Chief Marketing Officer",
-      organization: "E-commerce Solutions",
-      industry: "E-commerce",
+      title: "CTO",
+      company: "InnovateTech",
+      industry: "Technology",
       location: "Bangalore",
-      avatar: "/placeholder.svg?height=40&width=40",
+      matchScore: 88,
+      mutualConnections: 8,
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      premium: true,
     },
-  },
-  {
-    id: "3",
-    recommendedUserId: "user3",
-    connectionScore: 0.72,
-    status: "connected",
-    matchingFactors: ["Finance", "Investment", "Strategic Planning"],
-    recommendedUser: {
-      id: "user3",
+    {
+      id: "3",
       name: "Amit Patel",
-      role: "Chief Financial Officer",
-      organization: "FinanceFirst Ltd",
+      title: "CFO",
+      company: "FinanceFirst",
       industry: "Finance",
       location: "Delhi",
-      avatar: "/placeholder.svg?height=40&width=40",
+      matchScore: 82,
+      mutualConnections: 5,
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      premium: false,
     },
-  },
-]
-
-export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectionsPanelProps) {
-  const { user } = useAuth()
-  const [connections, setConnections] = useState<SmartConnection[]>([])
-  const [filteredConnections, setFilteredConnections] = useState<SmartConnection[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedIndustry, setSelectedIndustry] = useState<string>("all")
-  const [selectedRole, setSelectedRole] = useState<string>("all")
-  const [minScore, setMinScore] = useState<number>(0)
+    {
+      id: "4",
+      name: "Sunita Reddy",
+      title: "CMO",
+      company: "BrandBuilders",
+      industry: "Marketing",
+      location: "Hyderabad",
+      matchScore: 79,
+      mutualConnections: 3,
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      premium: true,
+    },
+    {
+      id: "5",
+      name: "Vikram Singh",
+      title: "COO",
+      company: "OperationsExcel",
+      industry: "Operations",
+      location: "Chennai",
+      matchScore: 75,
+      mutualConnections: 7,
+      avatar: "/placeholder-user.jpg",
+      verified: false,
+      premium: false,
+    },
+  ]
 
   useEffect(() => {
-    if (user) {
-      loadConnections()
-    }
-  }, [user])
-
-  useEffect(() => {
-    filterConnections()
-  }, [connections, searchTerm, selectedIndustry, selectedRole, minScore])
-
-  const loadConnections = async () => {
-    if (!user) return
-
-    try {
-      setIsLoading(true)
-      // Simulate API call
-      setTimeout(() => {
-        setConnections(mockConnections)
-        setIsLoading(false)
-      }, 1000)
-    } catch (error) {
-      console.error("Failed to load connections:", error)
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setConnections(mockConnections)
+      setFilteredConnections(mockConnections)
       setIsLoading(false)
-    }
-  }
+    }, 1000)
 
-  const refreshRecommendations = async () => {
-    if (!user) return
+    return () => clearTimeout(timer)
+  }, [])
 
-    try {
-      setIsRefreshing(true)
-      // Simulate refresh
-      setTimeout(() => {
-        setConnections([...mockConnections])
-        setIsRefreshing(false)
-      }, 1500)
-    } catch (error) {
-      console.error("Failed to refresh recommendations:", error)
-      setIsRefreshing(false)
-    }
-  }
-
-  const filterConnections = () => {
+  useEffect(() => {
     let filtered = connections
 
-    // Search filter
-    if (searchTerm) {
+    // Apply search filter
+    if (searchQuery) {
       filtered = filtered.filter(
-        (conn) =>
-          conn.recommendedUser.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          conn.recommendedUser.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          conn.recommendedUser.role.toLowerCase().includes(searchTerm.toLowerCase()),
+        (connection) =>
+          connection.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          connection.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          connection.company.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
-    // Industry filter
-    if (selectedIndustry !== "all") {
-      filtered = filtered.filter((conn) => conn.recommendedUser.industry === selectedIndustry)
+    // Apply industry filter
+    if (industryFilter !== "all") {
+      filtered = filtered.filter((connection) => connection.industry === industryFilter)
     }
 
-    // Role filter
-    if (selectedRole !== "all") {
-      filtered = filtered.filter((conn) => conn.recommendedUser.role === selectedRole)
+    // Apply location filter
+    if (locationFilter !== "all") {
+      filtered = filtered.filter((connection) => connection.location === locationFilter)
     }
 
-    // Score filter
-    filtered = filtered.filter((conn) => conn.connectionScore >= minScore)
+    // Sort by match score
+    filtered.sort((a, b) => b.matchScore - a.matchScore)
 
     setFilteredConnections(filtered)
+  }, [connections, searchQuery, industryFilter, locationFilter])
+
+  const handleConnect = (connectionId: string) => {
+    console.log("Connecting to:", connectionId)
+    // Implement connection logic
   }
 
-  const handleConnect = async (connection: SmartConnection) => {
-    try {
-      // Update connection status locally
-      setConnections((prev) =>
-        prev.map((conn) => (conn.id === connection.id ? { ...conn, status: "connected" as const } : conn)),
-      )
-    } catch (error) {
-      console.error("Failed to connect:", error)
-    }
-  }
+  const industries = ["Technology", "Finance", "Marketing", "Operations", "Healthcare", "Manufacturing"]
+  const locations = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Pune"]
 
-  const handleStartChat = (connection: SmartConnection) => {
-    onStartChat?.(connection.recommendedUserId)
-  }
-
-  const getScoreColor = (score: number) => {
-    if (score >= 0.8) return "text-green-600"
-    if (score >= 0.6) return "text-blue-600"
-    if (score >= 0.4) return "text-yellow-600"
-    return "text-gray-600"
-  }
-
-  const getScoreLabel = (score: number) => {
-    if (score >= 0.8) return "Excellent Match"
-    if (score >= 0.6) return "Good Match"
-    if (score >= 0.4) return "Fair Match"
-    return "Basic Match"
-  }
-
-  const industries = Array.from(new Set(connections.map((conn) => conn.recommendedUser.industry)))
-  const roles = Array.from(new Set(connections.map((conn) => conn.recommendedUser.role)))
-
-  if (!user) {
-    return null
+  if (isLoading) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Smart Connections
+          </CardTitle>
+          <CardDescription>Loading personalized connections...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center space-x-4 animate-pulse">
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <Card className={cn("h-full flex flex-col", className)}>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-blue-500" />
-            Smart Connections
-          </CardTitle>
-          <Button variant="outline" size="sm" onClick={refreshRecommendations} disabled={isRefreshing}>
-            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-          </Button>
-        </div>
-
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Smart Connections
+        </CardTitle>
+        <CardDescription>AI-powered executive connections based on your profile</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
         {/* Search and Filters */}
         <div className="space-y-3">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search connections..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
             />
           </div>
 
           <div className="flex gap-2">
-            <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
+            <Select value={industryFilter} onValueChange={setIndustryFilter}>
               <SelectTrigger className="flex-1">
                 <SelectValue placeholder="Industry" />
               </SelectTrigger>
@@ -244,118 +216,99 @@ export function SmartConnectionsPanel({ onStartChat, className }: SmartConnectio
               </SelectContent>
             </Select>
 
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
               <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Role" />
+                <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {roles.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role}
+                <SelectItem value="all">All Locations</SelectItem>
+                {locations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[160px]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredConnections.length === 0 ? (
-          <div className="text-center py-8">
-            <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No connections found</p>
-            <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or refresh recommendations</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredConnections.map((connection) => (
-              <div key={connection.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start gap-3">
+        {/* Connections List */}
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {filteredConnections.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No connections found matching your criteria</p>
+            </div>
+          ) : (
+            filteredConnections.map((connection) => (
+              <div
+                key={connection.id}
+                className="flex items-start space-x-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="relative">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={connection.recommendedUser.avatar || "/placeholder.svg"} />
+                    <AvatarImage src={connection.avatar || "/placeholder.svg"} alt={connection.name} />
                     <AvatarFallback>
-                      {connection.recommendedUser.name
+                      {connection.name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{connection.recommendedUser.name}</h3>
-                      <Badge variant="secondary" className={cn("text-xs", getScoreColor(connection.connectionScore))}>
-                        {Math.round(connection.connectionScore * 100)}%
-                      </Badge>
+                  {connection.verified && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                      <Star className="h-2 w-2 text-white" />
                     </div>
-
-                    <p className="text-sm text-muted-foreground mb-1">{connection.recommendedUser.role}</p>
-
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
-                      <div className="flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        <span className="truncate">{connection.recommendedUser.organization}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{connection.recommendedUser.location}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 mb-3">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs text-muted-foreground">{getScoreLabel(connection.connectionScore)}</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      {connection.status === "pending" ? (
-                        <Button size="sm" onClick={() => handleConnect(connection)} className="flex-1">
-                          <UserPlus className="h-3 w-3 mr-1" />
-                          Connect
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleStartChat(connection)}
-                          className="flex-1"
-                        >
-                          <MessageCircle className="h-3 w-3 mr-1" />
-                          Message
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {connection.matchingFactors && connection.matchingFactors.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <p className="text-xs text-muted-foreground mb-2">Common interests:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {connection.matchingFactors.slice(0, 3).map((factor, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {factor}
-                        </Badge>
-                      ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium truncate">{connection.name}</h4>
+                    {connection.premium && (
+                      <Badge variant="secondary" className="text-xs">
+                        Premium
+                      </Badge>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-muted-foreground mb-1">
+                    {connection.title} at {connection.company}
+                  </p>
+
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
+                    <div className="flex items-center gap-1">
+                      <Building className="h-3 w-3" />
+                      {connection.industry}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {connection.location}
                     </div>
                   </div>
-                )}
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="font-medium text-green-600">{connection.matchScore}% match</span>
+                      <span className="text-muted-foreground">{connection.mutualConnections} mutual connections</span>
+                    </div>
+
+                    <Button size="sm" onClick={() => handleConnect(connection.id)} className="ml-2">
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      Connect
+                    </Button>
+                  </div>
+                </div>
               </div>
-            ))}
+            ))
+          )}
+        </div>
+
+        {filteredConnections.length > 0 && (
+          <div className="text-center pt-4 border-t">
+            <Button variant="outline" className="w-full bg-transparent">
+              View All Connections
+            </Button>
           </div>
         )}
       </CardContent>

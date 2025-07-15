@@ -1,161 +1,217 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { MentorCard, type Mentor } from "@/components/mentor-card"
-import { SearchBar } from "@/components/search-bar"
-import { FilterSidebar, type FilterOptions } from "@/components/filter-sidebar"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter, Grid, List, SlidersHorizontal } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { MentorCard } from "@/components/mentor-card"
+import { SearchBar } from "@/components/search-bar"
+import { FilterSidebar } from "@/components/filter-sidebar"
+import { Navigation } from "@/components/navigation"
+import { Grid, List, Users, Star, TrendingUp, Filter } from "lucide-react"
+import { useAuth } from "@/context/auth-context"
+import { useRouter } from "next/navigation"
 
-// Mock data for Indian executives
-const mockMentors: Mentor[] = [
-  {
-    id: "1",
-    name: "Rajesh Sharma",
-    title: "Chief Executive Officer",
-    company: "TechMahindra",
-    avatar: "/placeholder-user.jpg",
-    rating: 4.9,
-    reviewCount: 127,
-    hourlyRate: 5000,
-    currency: "₹",
-    location: "Mumbai",
-    expertise: ["Leadership", "Strategy", "Digital Transformation", "Technology"],
-    experience: 15,
-    isOnline: true,
-    isVerified: true,
-    responseTime: "< 2 hours",
-    languages: ["English", "Hindi"],
-    sessionCount: 234,
-    bio: "Former CEO of multiple Fortune 500 companies with expertise in digital transformation and strategic leadership.",
-  },
-  {
-    id: "2",
-    name: "Priya Nair",
-    title: "Chief Marketing Officer",
-    company: "Flipkart",
-    avatar: "/placeholder-user.jpg",
-    rating: 4.8,
-    reviewCount: 89,
-    hourlyRate: 4500,
-    currency: "₹",
-    location: "Bangalore",
-    expertise: ["Marketing", "Brand Strategy", "Digital Marketing", "E-commerce"],
-    experience: 12,
-    isOnline: false,
-    isVerified: true,
-    responseTime: "< 4 hours",
-    languages: ["English", "Tamil"],
-    sessionCount: 156,
-    bio: "Marketing leader with 12+ years of experience in building global brands and driving customer acquisition.",
-  },
-  {
-    id: "3",
-    name: "Amit Patel",
-    title: "Chief Financial Officer",
-    company: "Reliance Industries",
-    avatar: "/placeholder-user.jpg",
-    rating: 4.7,
-    reviewCount: 203,
-    hourlyRate: 6000,
-    currency: "₹",
-    location: "Mumbai",
-    expertise: ["Finance", "Investment", "Risk Management", "Corporate Strategy"],
-    experience: 18,
-    isOnline: true,
-    isVerified: true,
-    responseTime: "< 1 hour",
-    languages: ["English", "Hindi", "Gujarati"],
-    sessionCount: 312,
-    bio: "Senior finance executive with extensive experience in corporate finance, M&A, and strategic planning.",
-  },
-  {
-    id: "4",
-    name: "Sunita Reddy",
-    title: "Chief Technology Officer",
-    company: "Infosys",
-    avatar: "/placeholder-user.jpg",
-    rating: 4.9,
-    reviewCount: 145,
-    hourlyRate: 5500,
-    currency: "₹",
-    location: "Hyderabad",
-    expertise: ["Technology", "AI/ML", "Cloud Computing", "Innovation"],
-    experience: 14,
-    isOnline: true,
-    isVerified: true,
-    responseTime: "< 3 hours",
-    languages: ["English", "Telugu"],
-    sessionCount: 198,
-    bio: "Technology leader driving digital innovation and AI transformation across enterprise solutions.",
-  },
-  {
-    id: "5",
-    name: "Vikram Singh",
-    title: "Chief Operations Officer",
-    company: "Tata Consultancy Services",
-    avatar: "/placeholder-user.jpg",
-    rating: 4.6,
-    reviewCount: 167,
-    hourlyRate: 4800,
-    currency: "₹",
-    location: "Delhi",
-    expertise: ["Operations", "Process Optimization", "Supply Chain", "Quality Management"],
-    experience: 16,
-    isOnline: false,
-    isVerified: true,
-    responseTime: "< 6 hours",
-    languages: ["English", "Hindi"],
-    sessionCount: 278,
-    bio: "Operations expert with proven track record in scaling global operations and process excellence.",
-  },
-  {
-    id: "6",
-    name: "Kavitha Krishnan",
-    title: "Chief Human Resources Officer",
-    company: "Wipro",
-    avatar: "/placeholder-user.jpg",
-    rating: 4.8,
-    reviewCount: 134,
-    hourlyRate: 4200,
-    currency: "₹",
-    location: "Chennai",
-    expertise: ["HR Strategy", "Talent Management", "Organizational Development", "Leadership"],
-    experience: 13,
-    isOnline: true,
-    isVerified: true,
-    responseTime: "< 2 hours",
-    languages: ["English", "Tamil"],
-    sessionCount: 189,
-    bio: "HR leader specializing in talent strategy, culture transformation, and leadership development.",
-  },
-]
+interface Mentor {
+  id: string
+  name: string
+  title: string
+  company: string
+  industry: string
+  location: string
+  experience: number
+  rating: number
+  reviewCount: number
+  hourlyRate: number
+  availability: string
+  specialties: string[]
+  avatar?: string
+  verified: boolean
+  responseTime: string
+  sessionsCompleted: number
+}
+
+interface FilterOptions {
+  industries: string[]
+  locations: string[]
+  experience: [number, number]
+  rating: number
+  availability: string[]
+  priceRange: [number, number]
+  specialties: string[]
+}
 
 export default function MentorBoardPage() {
+  const { user } = useAuth()
+  const router = useRouter()
   const [mentors, setMentors] = useState<Mentor[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("rating")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showFilters, setShowFilters] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [filters, setFilters] = useState<FilterOptions>({
-    expertise: [],
+    industries: [],
+    locations: [],
     experience: [0, 30],
-    hourlyRate: [0, 10000],
-    location: [],
-    languages: [],
     rating: 0,
     availability: [],
-    verified: false,
+    priceRange: [0, 10000],
+    specialties: [],
   })
 
-  // Simulate loading
+  // Mock mentor data with realistic Indian executives
+  const mockMentors: Mentor[] = [
+    {
+      id: "1",
+      name: "Rajesh Kumar",
+      title: "CEO",
+      company: "TechCorp Solutions",
+      industry: "Technology",
+      location: "Mumbai",
+      experience: 15,
+      rating: 4.9,
+      reviewCount: 127,
+      hourlyRate: 5000,
+      availability: "Available",
+      specialties: ["Leadership", "Strategy", "Digital Transformation"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 2 hours",
+      sessionsCompleted: 245,
+    },
+    {
+      id: "2",
+      name: "Dr. Priya Sharma",
+      title: "CTO",
+      company: "InnovateTech",
+      industry: "Technology",
+      location: "Bangalore",
+      experience: 12,
+      rating: 4.8,
+      reviewCount: 89,
+      hourlyRate: 4500,
+      availability: "Available",
+      specialties: ["Technology", "Innovation", "Product Management"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 1 hour",
+      sessionsCompleted: 178,
+    },
+    {
+      id: "3",
+      name: "Amit Patel",
+      title: "CFO",
+      company: "FinanceFirst",
+      industry: "Finance",
+      location: "Delhi",
+      experience: 18,
+      rating: 4.7,
+      reviewCount: 156,
+      hourlyRate: 4000,
+      availability: "Busy",
+      specialties: ["Finance", "Strategy", "Business Development"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 4 hours",
+      sessionsCompleted: 312,
+    },
+    {
+      id: "4",
+      name: "Sunita Reddy",
+      title: "CMO",
+      company: "BrandBuilders",
+      industry: "Marketing",
+      location: "Hyderabad",
+      experience: 10,
+      rating: 4.6,
+      reviewCount: 73,
+      hourlyRate: 3500,
+      availability: "Available Soon",
+      specialties: ["Marketing", "Brand Strategy", "Digital Marketing"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 3 hours",
+      sessionsCompleted: 134,
+    },
+    {
+      id: "5",
+      name: "Vikram Singh",
+      title: "COO",
+      company: "OperationsExcel",
+      industry: "Operations",
+      location: "Chennai",
+      experience: 14,
+      rating: 4.5,
+      reviewCount: 92,
+      hourlyRate: 3800,
+      availability: "By Appointment",
+      specialties: ["Operations", "Process Improvement", "Change Management"],
+      avatar: "/placeholder-user.jpg",
+      verified: false,
+      responseTime: "Within 6 hours",
+      sessionsCompleted: 198,
+    },
+    {
+      id: "6",
+      name: "Meera Joshi",
+      title: "CHRO",
+      company: "PeopleFirst",
+      industry: "HR",
+      location: "Pune",
+      experience: 11,
+      rating: 4.8,
+      reviewCount: 64,
+      hourlyRate: 3200,
+      availability: "Available",
+      specialties: ["HR", "Leadership Development", "Organizational Culture"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 2 hours",
+      sessionsCompleted: 156,
+    },
+    {
+      id: "7",
+      name: "Arjun Kapoor",
+      title: "CPO",
+      company: "ProductInnovate",
+      industry: "Technology",
+      location: "Gurgaon",
+      experience: 9,
+      rating: 4.4,
+      reviewCount: 45,
+      hourlyRate: 4200,
+      availability: "Available",
+      specialties: ["Product Management", "Innovation", "User Experience"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 1 hour",
+      sessionsCompleted: 87,
+    },
+    {
+      id: "8",
+      name: "Kavya Nair",
+      title: "CTO",
+      company: "CloudTech",
+      industry: "Technology",
+      location: "Kochi",
+      experience: 13,
+      rating: 4.9,
+      reviewCount: 118,
+      hourlyRate: 4800,
+      availability: "Available Soon",
+      specialties: ["Cloud Computing", "Architecture", "Team Leadership"],
+      avatar: "/placeholder-user.jpg",
+      verified: true,
+      responseTime: "Within 3 hours",
+      sessionsCompleted: 203,
+    },
+  ]
+
   useEffect(() => {
+    // Simulate loading
     const timer = setTimeout(() => {
       setMentors(mockMentors)
       setIsLoading(false)
@@ -164,110 +220,105 @@ export default function MentorBoardPage() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Filter and search mentors
-  const filteredMentors = useMemo(() => {
+  // Filter and sort mentors
+  const filteredAndSortedMentors = useMemo(() => {
     let filtered = mentors
 
-    // Search filter
+    // Apply search filter
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (mentor) =>
-          mentor.name.toLowerCase().includes(query) ||
-          mentor.title.toLowerCase().includes(query) ||
-          mentor.company.toLowerCase().includes(query) ||
-          mentor.expertise.some((skill) => skill.toLowerCase().includes(query)),
+          mentor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          mentor.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          mentor.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          mentor.specialties.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase())),
       )
     }
 
     // Apply filters
-    if (filters.expertise.length > 0) {
-      filtered = filtered.filter((mentor) => filters.expertise.some((skill) => mentor.expertise.includes(skill)))
+    if (filters.industries.length > 0) {
+      filtered = filtered.filter((mentor) => filters.industries.includes(mentor.industry))
     }
 
-    if (filters.location.length > 0) {
-      filtered = filtered.filter((mentor) => filters.location.includes(mentor.location))
+    if (filters.locations.length > 0) {
+      filtered = filtered.filter((mentor) => filters.locations.includes(mentor.location))
     }
 
-    if (filters.languages.length > 0) {
-      filtered = filtered.filter((mentor) => filters.languages.some((lang) => mentor.languages.includes(lang)))
+    if (filters.availability.length > 0) {
+      filtered = filtered.filter((mentor) => filters.availability.includes(mentor.availability))
     }
 
-    if (filters.verified) {
-      filtered = filtered.filter((mentor) => mentor.isVerified)
+    if (filters.specialties.length > 0) {
+      filtered = filtered.filter((mentor) => mentor.specialties.some((s) => filters.specialties.includes(s)))
     }
 
-    // Experience range
+    // Apply experience filter
     filtered = filtered.filter(
       (mentor) => mentor.experience >= filters.experience[0] && mentor.experience <= filters.experience[1],
     )
 
-    // Hourly rate range
-    filtered = filtered.filter(
-      (mentor) => mentor.hourlyRate >= filters.hourlyRate[0] && mentor.hourlyRate <= filters.hourlyRate[1],
-    )
-
-    // Rating filter
+    // Apply rating filter
     if (filters.rating > 0) {
       filtered = filtered.filter((mentor) => mentor.rating >= filters.rating)
     }
 
+    // Apply price range filter
+    filtered = filtered.filter(
+      (mentor) => mentor.hourlyRate >= filters.priceRange[0] && mentor.hourlyRate <= filters.priceRange[1],
+    )
+
     // Sort mentors
-    switch (sortBy) {
-      case "rating":
-        filtered.sort((a, b) => b.rating - a.rating)
-        break
-      case "price-low":
-        filtered.sort((a, b) => a.hourlyRate - b.hourlyRate)
-        break
-      case "price-high":
-        filtered.sort((a, b) => b.hourlyRate - a.hourlyRate)
-        break
-      case "experience":
-        filtered.sort((a, b) => b.experience - a.experience)
-        break
-      case "sessions":
-        filtered.sort((a, b) => b.sessionCount - a.sessionCount)
-        break
-      default:
-        break
-    }
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "rating":
+          return b.rating - a.rating
+        case "experience":
+          return b.experience - a.experience
+        case "price-low":
+          return a.hourlyRate - b.hourlyRate
+        case "price-high":
+          return b.hourlyRate - a.hourlyRate
+        case "sessions":
+          return b.sessionsCompleted - a.sessionsCompleted
+        default:
+          return 0
+      }
+    })
 
     return filtered
   }, [mentors, searchQuery, filters, sortBy])
 
-  const handleViewProfile = (mentorId: string) => {
-    console.log("View profile:", mentorId)
-    // Navigate to mentor profile page
-  }
-
   const handleBookSession = (mentorId: string) => {
-    console.log("Book session:", mentorId)
-    // Navigate to booking page
+    if (!user) {
+      router.push("/auth/login")
+      return
+    }
+    router.push(`/mentor-board/${mentorId}/request`)
   }
 
-  const handleMessage = (mentorId: string) => {
-    console.log("Message mentor:", mentorId)
-    // Open messaging interface
+  const handleViewProfile = (mentorId: string) => {
+    router.push(`/mentor-board/${mentorId}`)
+  }
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+  }
+
+  const handleFiltersChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters)
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-
-        <div className="flex gap-6">
-          <div className="w-80">
-            <Skeleton className="h-96 w-full" />
-          </div>
-
-          <div className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-80 w-full" />
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto py-8 px-4">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-80 bg-gray-200 rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -277,109 +328,169 @@ export default function MentorBoardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Find Your Mentor</h1>
-        <p className="text-muted-foreground">Connect with experienced executives and industry leaders</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navigation />
 
-      {/* Search and Controls */}
-      <div className="mb-6 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <SearchBar
-              placeholder="Search mentors by name, company, or expertise..."
-              onSearch={setSearchQuery}
-              className="w-full"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-            </Button>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rating">Top Rated</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="experience">Most Experienced</SelectItem>
-                <SelectItem value="sessions">Most Sessions</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex border rounded-md">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="rounded-r-none"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="rounded-l-none"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Results count */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {filteredMentors.length} mentor{filteredMentors.length !== 1 ? "s" : ""} found
+      <div className="container mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Mentor Board</h1>
+          <p className="text-muted-foreground">
+            Connect with experienced C-level executives for personalized mentorship
           </p>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex gap-6">
-        {/* Filters Sidebar */}
-        {showFilters && (
-          <div className="w-80 flex-shrink-0">
-            <FilterSidebar filters={filters} onFiltersChange={setFilters} />
-          </div>
-        )}
+        {/* Stats */}
+        <div className="grid gap-4 md:grid-cols-4 mb-8">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold">{mentors.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Mentors</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Mentors Grid/List */}
-        <div className="flex-1">
-          {filteredMentors.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Filter className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No mentors found</h3>
-                <p className="text-muted-foreground text-center">
-                  Try adjusting your search criteria or filters to find more mentors.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div
-              className={cn(viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4")}
-            >
-              {filteredMentors.map((mentor) => (
-                <MentorCard
-                  key={mentor.id}
-                  mentor={mentor}
-                  onViewProfile={handleViewProfile}
-                  onBookSession={handleBookSession}
-                  onMessage={handleMessage}
-                  className={viewMode === "list" ? "max-w-none" : ""}
-                />
-              ))}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Star className="h-5 w-5 text-yellow-500" />
+                <div>
+                  <p className="text-2xl font-bold">4.7</p>
+                  <p className="text-sm text-muted-foreground">Avg Rating</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold">1.2K+</p>
+                  <p className="text-sm text-muted-foreground">Sessions Completed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Badge className="bg-green-500">
+                  {mentors.filter((m) => m.availability === "Available").length} Available
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex gap-6">
+          {/* Filters Sidebar */}
+          {showFilters && (
+            <div className="w-80 flex-shrink-0">
+              <FilterSidebar filters={filters} onFiltersChange={handleFiltersChange} />
             </div>
           )}
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Search and Controls */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <SearchBar
+                  placeholder="Search mentors by name, title, company, or specialty..."
+                  onSearch={handleSearch}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant={showFilters ? "default" : "outline"} onClick={() => setShowFilters(!showFilters)}>
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                </Button>
+
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="experience">Most Experienced</SelectItem>
+                    <SelectItem value="sessions">Most Sessions</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex border rounded-lg">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredAndSortedMentors.length} of {mentors.length} mentors
+              </p>
+            </div>
+
+            {/* Mentors Grid/List */}
+            {filteredAndSortedMentors.length === 0 ? (
+              <Card>
+                <CardContent className="py-16 text-center">
+                  <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-medium mb-2">No mentors found</h3>
+                  <p className="text-muted-foreground mb-4">Try adjusting your search criteria or filters</p>
+                  <Button
+                    onClick={() => {
+                      setSearchQuery("")
+                      setFilters({
+                        industries: [],
+                        locations: [],
+                        experience: [0, 30],
+                        rating: 0,
+                        availability: [],
+                        priceRange: [0, 10000],
+                        specialties: [],
+                      })
+                    }}
+                  >
+                    Clear All Filters
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className={viewMode === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
+                {filteredAndSortedMentors.map((mentor) => (
+                  <MentorCard
+                    key={mentor.id}
+                    mentor={mentor}
+                    onBookSession={handleBookSession}
+                    onViewProfile={handleViewProfile}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
